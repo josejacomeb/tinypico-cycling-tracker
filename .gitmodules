@@ -1,3 +1,6 @@
 [submodule "footprints/usini_kicad_sensors"]
 	path = footprints/usini_kicad_sensors
 	url = https://github.com/usini/usini_kicad_sensors.git
+[submodule "footprints/uBlox-Neo6M"]
+	path = footprints/uBlox-Neo6M
+	url = https://github.com/josejacomeb/KiCad-GPS60MV2-uBlox-Neo6M.git
