@@ -4,3 +4,6 @@
 [submodule "footprints/uBlox-Neo6M"]
 	path = footprints/uBlox-Neo6M
 	url = https://github.com/josejacomeb/KiCad-GPS60MV2-uBlox-Neo6M.git
+[submodule "footprints/MicroSD-Card-Adapter"]
+	path = footprints/MicroSD-Card-Adapter
+	url = https://github.com/josejacomeb/KiCad-MicroSD-Card-Adapter
