@@ -7,3 +7,6 @@
 [submodule "footprints/MicroSD-Card-Adapter"]
 	path = footprints/MicroSD-Card-Adapter
 	url = https://github.com/josejacomeb/KiCad-MicroSD-Card-Adapter
+[submodule "footprints/Soldered-SSD1306-OLED-Display"]
+	path = footprints/Soldered-SSD1306-OLED-Display
+	url = https://github.com/josejacomeb/KiCad-SSD1306-0.96in-I2C-OLED-Display
