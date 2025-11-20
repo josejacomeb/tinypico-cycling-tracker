@@ -1,15 +1,15 @@
 [submodule "footprints/usini_kicad_sensors"]
-	path = footprints/usini_kicad_sensors
+	path = kicad-libraries/usini_kicad_sensors
 	url = https://github.com/usini/usini_kicad_sensors.git
 [submodule "footprints/uBlox-Neo6M"]
-	path = footprints/uBlox-Neo6M
+	path = kicad-libraries/uBlox-Neo6M
 	url = https://github.com/josejacomeb/KiCad-GPS60MV2-uBlox-Neo6M.git
 [submodule "footprints/MicroSD-Card-Adapter"]
-	path = footprints/MicroSD-Card-Adapter
+	path = kicad-libraries/MicroSD-Card-Adapter
 	url = https://github.com/josejacomeb/KiCad-MicroSD-Card-Adapter
 [submodule "footprints/Soldered-SSD1306-OLED-Display"]
-	path = footprints/Soldered-SSD1306-OLED-Display
+	path = kicad-libraries/Soldered-SSD1306-OLED-Display
 	url = https://github.com/josejacomeb/KiCad-SSD1306-0.96in-I2C-OLED-Display
 [submodule "footprints/TinyPico"]
-	path = footprints/TinyPico
+	path = kicad-libraries/TinyPico
 	url = https://github.com/josejacomeb/KiCad-TinyPico.git
