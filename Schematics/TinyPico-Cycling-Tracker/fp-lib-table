@@ -5,4 +5,5 @@
   (lib (name "MicroSD-Card-Adapter")(type "KiCad")(uri "${KIPRJMOD}/../kicad-libraries/MicroSD-Card-Adapter/MicroSD-Card-Adapter.pretty")(options "")(descr ""))
   (lib (name "Soldered")(type "KiCad")(uri "${KIPRJMOD}/../kicad-libraries/Soldered-SSD1306-OLED-Display/Soldered.pretty")(options "")(descr ""))
   (lib (name "TinyPico")(type "KiCad")(uri "${KIPRJMOD}/../kicad-libraries/TinyPico/TinyPico.pretty")(options "")(descr ""))
+  (lib (name "SPST_Button")(type "KiCad")(uri "${KIPRJMOD}/../kicad-libraries/SPST Button/SPST_Button.pretty")(options "")(descr ""))
 )
