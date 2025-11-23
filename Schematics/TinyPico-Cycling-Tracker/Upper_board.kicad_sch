@@ -1445,7 +1445,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "19e5c97c-3551-41fd-ae4a-b73e92bed0de")
-		(property "Reference" "#FLG03"
+		(property "Reference" "#FLG?"
 			(at 161.29 45.085 0)
 			(effects
 				(font
@@ -1493,6 +1493,12 @@
 			(uuid "42152bc3-2bc2-4c72-8fc7-da4f557b37ed")
 		)
 		(instances
+			(project "Upper_board"
+				(path "/437a6128-0e45-45ff-808b-ce6204aa4772"
+					(reference "#FLG?")
+					(unit 1)
+				)
+			)
 			(project ""
 				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/087e4c3f-dadb-4b00-b947-e0c7adeb7ff5"
 					(reference "#FLG03")
@@ -1511,7 +1517,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "2b78ed9c-9682-47f7-8414-13262cedff7d")
-		(property "Reference" "SW2"
+		(property "Reference" "SW?"
 			(at 162.56 72.3899 90)
 			(effects
 				(font
@@ -1529,7 +1535,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "Button_Switch_THT:SW_TH_Tactile_Omron_B3F-102x"
+		(property "Footprint" "SPST_Button:SPST_Button"
 			(at 156.21 73.66 0)
 			(effects
 				(font
@@ -1563,6 +1569,12 @@
 			(uuid "d8dcda62-5ba2-438f-8785-b2700b164a02")
 		)
 		(instances
+			(project "Upper_board"
+				(path "/437a6128-0e45-45ff-808b-ce6204aa4772"
+					(reference "SW?")
+					(unit 1)
+				)
+			)
 			(project ""
 				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/087e4c3f-dadb-4b00-b947-e0c7adeb7ff5"
 					(reference "SW2")
@@ -1581,7 +1593,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "423a7411-154a-4e62-9962-ee880420715f")
-		(property "Reference" "#PWR01"
+		(property "Reference" "#PWR?"
 			(at 168.91 50.8 0)
 			(effects
 				(font
@@ -1629,6 +1641,12 @@
 			(uuid "d65a2b76-8a0f-4b41-b9f6-ea55c22ec2e9")
 		)
 		(instances
+			(project "Upper_board"
+				(path "/437a6128-0e45-45ff-808b-ce6204aa4772"
+					(reference "#PWR?")
+					(unit 1)
+				)
+			)
 			(project ""
 				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/087e4c3f-dadb-4b00-b947-e0c7adeb7ff5"
 					(reference "#PWR01")
@@ -1647,7 +1665,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "56658d15-aca4-4e34-aa25-3a8351a4c7ea")
-		(property "Reference" "U6"
+		(property "Reference" "U?"
 			(at 199.39 72.3899 0)
 			(effects
 				(font
@@ -1717,6 +1735,12 @@
 			(uuid "82e03d4d-f108-40ee-9867-ef692b96e9a9")
 		)
 		(instances
+			(project "Upper_board"
+				(path "/437a6128-0e45-45ff-808b-ce6204aa4772"
+					(reference "U?")
+					(unit 1)
+				)
+			)
 			(project ""
 				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/087e4c3f-dadb-4b00-b947-e0c7adeb7ff5"
 					(reference "U6")
@@ -1735,7 +1759,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "78974cca-8786-4109-ad02-f96fca7eb5cf")
-		(property "Reference" "U7"
+		(property "Reference" "U?"
 			(at 193.04 50.1649 0)
 			(effects
 				(font
@@ -1793,6 +1817,12 @@
 			(uuid "eeee0aa1-4ef9-4d6e-8abe-5eae11c05215")
 		)
 		(instances
+			(project "Upper_board"
+				(path "/437a6128-0e45-45ff-808b-ce6204aa4772"
+					(reference "U?")
+					(unit 1)
+				)
+			)
 			(project ""
 				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/087e4c3f-dadb-4b00-b947-e0c7adeb7ff5"
 					(reference "U7")
@@ -1811,7 +1841,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "8dc86013-d03a-4b5c-9369-34dfba158c55")
-		(property "Reference" "R2"
+		(property "Reference" "R?"
 			(at 163.83 57.1499 0)
 			(effects
 				(font
@@ -1863,6 +1893,12 @@
 			(uuid "5b74fc42-476e-4be4-9e52-9650e64cbe1a")
 		)
 		(instances
+			(project "Upper_board"
+				(path "/437a6128-0e45-45ff-808b-ce6204aa4772"
+					(reference "R?")
+					(unit 1)
+				)
+			)
 			(project ""
 				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/087e4c3f-dadb-4b00-b947-e0c7adeb7ff5"
 					(reference "R2")
@@ -1881,7 +1917,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "f39032e1-7034-46c3-a091-63d6d3167daa")
-		(property "Reference" "#PWR06"
+		(property "Reference" "#PWR?"
 			(at 168.91 97.79 0)
 			(effects
 				(font
@@ -1929,6 +1965,12 @@
 			(uuid "d3cfa6b8-4d07-4e45-93bb-a059c1346d67")
 		)
 		(instances
+			(project "Upper_board"
+				(path "/437a6128-0e45-45ff-808b-ce6204aa4772"
+					(reference "#PWR?")
+					(unit 1)
+				)
+			)
 			(project ""
 				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/087e4c3f-dadb-4b00-b947-e0c7adeb7ff5"
 					(reference "#PWR06")
@@ -1947,7 +1989,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "fb143a61-b6af-46fc-8d66-ce6345b24be8")
-		(property "Reference" "#FLG01"
+		(property "Reference" "#FLG?"
 			(at 212.09 80.645 0)
 			(effects
 				(font
@@ -1995,6 +2037,12 @@
 			(uuid "5681f238-4fe7-4da4-903c-9cb15c42de10")
 		)
 		(instances
+			(project "Upper_board"
+				(path "/437a6128-0e45-45ff-808b-ce6204aa4772"
+					(reference "#FLG?")
+					(unit 1)
+				)
+			)
 			(project ""
 				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/087e4c3f-dadb-4b00-b947-e0c7adeb7ff5"
 					(reference "#FLG01")
@@ -2003,4 +2051,10 @@
 			)
 		)
 	)
+	(sheet_instances
+		(path "/"
+			(page "1")
+		)
+	)
+	(embedded_fonts no)
 )
