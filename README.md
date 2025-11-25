@@ -2,7 +2,14 @@
 
 Tinypico based GPS + IMU + SD data logger for cycling purposes
 
-## Pre install requierements
+## Software
+
+- [Kicad v9.x.x](https://www.kicad.org/)
+- [KiKit v1.7.x](https://yaqwsx.github.io/KiKit/latest/)
+
+## Instructions
+
+### For KiCad
 
 1. Add the symbols via the `Preferences` > `Manage symbol Libraries` > `Project Specific Libraries`, make sure that you add the `kicad-libraries` subfolders:
     a. `usini_kicad_sensors/usini_sensors.pretty`
@@ -17,3 +24,10 @@ Tinypico based GPS + IMU + SD data logger for cycling purposes
     c. `MicroSD-Card-Adapter/MicroSD-Card-Adapter.kicad_sym`
     d. `Soldered-SSD1306-OLED-Display/Soldered.pretty`
     e. `TinyPico/TinyPico.pretty`
+3. Install the `KiKit` in your local system
+
+    ```bash
+    python -m venv .venv/
+    source .venv/bin/activate
+    pip3 install kikit
+    ```

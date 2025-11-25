@@ -1,0 +1,9 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "usini_kicad_sensors")(type "KiCad")(uri "${KIPRJMOD}/../kicad-libraries/usini_kicad_sensors/usini_sensors.pretty")(options "")(descr ""))
+  (lib (name "uBLox-NEO-6M")(type "KiCad")(uri "${KIPRJMOD}/../kicad-libraries/uBlox-Neo6M/uBLox-NEO-6M.pretty")(options "")(descr ""))
+  (lib (name "MicroSD-Card-Adapter")(type "KiCad")(uri "${KIPRJMOD}/../kicad-libraries/MicroSD-Card-Adapter/MicroSD-Card-Adapter.pretty")(options "")(descr ""))
+  (lib (name "Soldered")(type "KiCad")(uri "${KIPRJMOD}/../kicad-libraries/Soldered-SSD1306-OLED-Display/Soldered.pretty")(options "")(descr ""))
+  (lib (name "TinyPico")(type "KiCad")(uri "${KIPRJMOD}/../kicad-libraries/TinyPico/TinyPico.pretty")(options "")(descr ""))
+  (lib (name "SPST_Button")(type "KiCad")(uri "${KIPRJMOD}/../kicad-libraries/SPST Button/SPST_Button.pretty")(options "")(descr ""))
+)
