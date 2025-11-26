@@ -3,7 +3,6 @@
 * Written by: josejacomeb / 2025
 */
 #include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
 #include <I2Cdev.h>
 #include <SPI.h>
 #include <MPU6050_6Axis_MotionApps20.h>
@@ -12,24 +11,19 @@
 #include <TinyPICO.h>
 
 #include "writter.hpp"
+#include "oled.hpp"
 
-// OLED Display files values
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
-#define OLED_RESET -1 
-#define SCREEN_ADDRESS 0x3C
 // TinyPICO PINS
 // Digital UART Pins for ESP32-PICO-D4
-#define TX 25 
+#define TX 25
 #define RX 26
-#define INPUT_PIN 4
+#define INPUT_PIN 33
 #define PRINT 0
 // SD Pins control
 const unsigned int CS = 5;
 // MPU Interrupt Pin
 int const INTERRUPT_PIN = 2;  // Define the interruption #0 pin
 
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 // Initialise the TinyPICO library
 TinyPICO tp = TinyPICO();
@@ -63,22 +57,12 @@ unsigned long start;
 const unsigned int period = 100;
 bool start_writing = false;
 bool end_writing = false;
-
+OLEDGPS oled_display;
 
 void setup() {
   tp.DotStar_SetPixelColor(255, 0, 255);
   // Used for debug output only
   Serial.begin(115200);
-  if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
-    Serial.println(F("SSD1306 allocation failed"));
-    for (;;)
-      ;  // Don't proceed, loop forever
-  }
-  display.display();
-  delay(2000);  // Pause for 2 seconds
-
-  // Clear the buffer
-  display.clearDisplay();
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
   Wire.begin();
   Wire.setClock(400000);  // 400kHz I2C clock. Comment on this line if having compilation difficulties
@@ -210,25 +194,7 @@ void loop() {
     Serial.print(" Time in UTC: ");
     Serial.println(String(gps.date.year()) + "/" + String(gps.date.month()) + "/" + String(gps.date.day()) + "," + String(gps.time.hour()) + ":" + String(gps.time.minute()) + ":" + String(gps.time.second()));
 #endif
-    display.setTextColor(SSD1306_WHITE);
-    display.setCursor(1, 0);
-    display.clearDisplay();
-    display.setTextSize(1);
-    display.print("Lat: ");
-    display.print(lat);
-    display.print(" lng: ");
-    display.print(lng);
-    display.print(" sp: ");
-    display.print(speed);
-    display.print(" h: ");
-    display.println(altitude);
-    display.println("*--- YPR ---*");
-    display.print(ypr_ang[0]);
-    display.print(" ");
-    display.print(ypr_ang[1]);
-    display.print(" ");
-    display.println(ypr_ang[2]);
-    display.display();
+  oled_display.update_values(lat, lng, speed, altitude, ypr);
     if (start_writing) {
       write_gpx(lat, lng, altitude, gps.date, gps.time);
       if (end_writing) {
