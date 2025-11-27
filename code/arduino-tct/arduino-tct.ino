@@ -2,11 +2,9 @@
 * Software for the Tinypico GPS Tracker
 * Written by: josejacomeb / 2025
 */
-#include <Adafruit_GFX.h>
 #include <I2Cdev.h>
 #include <SPI.h>
 #include <MPU6050_6Axis_MotionApps20.h>
-#include <Wire.h>
 #include <TinyGPS++.h>
 #include <TinyPICO.h>
 
@@ -23,7 +21,6 @@
 const unsigned int CS = 5;
 // MPU Interrupt Pin
 int const INTERRUPT_PIN = 2;  // Define the interruption #0 pin
-
 
 // Initialise the TinyPICO library
 TinyPICO tp = TinyPICO();
@@ -63,6 +60,7 @@ void setup() {
   tp.DotStar_SetPixelColor(255, 0, 255);
   // Used for debug output only
   Serial.begin(115200);
+  oled_display.init_screen();
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
   Wire.begin();
   Wire.setClock(400000);  // 400kHz I2C clock. Comment on this line if having compilation difficulties
