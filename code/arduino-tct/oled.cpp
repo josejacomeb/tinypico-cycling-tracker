@@ -1,39 +1,59 @@
 #include "oled.hpp"
 
 OLEDGPS::OLEDGPS()
-  : Adafruit_SSD1306(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1, 100000, 100000) {
+  : Adafruit_SSD1306(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET) {
+}
+
+void OLEDGPS::init_gps() {
+  setTextSize(2);
+  setCursor(5, 45);
+  print("OK");
+  display();
+}
+
+void OLEDGPS::init_sd() {
+  setTextSize(2);
+  setCursor(54, 45);
+  print("OK");
+  display();
+}
+
+void OLEDGPS::init_imu() {
+  setTextSize(2);
+  setCursor(100, 45);
+  print("OK");
+  display();
 }
 
 void OLEDGPS::init_screen() {
-  if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+  if (!Adafruit_SSD1306::begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
     Serial.println(F("SSD1306 allocation failed"));
     for (;;)
       ;  // Don't proceed, loop forever
   }
   // Clear the buffer
-  display.clearDisplay();
-  display.drawBitmap((display.width() - LOGO_WIDTH) / 2, (display.height() - LOGO_HEIGHT) / 2, logo_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
+  clearDisplay();
+  drawBitmap((width() - splash_width) / 2, (height() - splash_height) / 2, splash_data, splash_width, splash_height, 1);
+  display();
+  setTextColor(SSD1306_WHITE);
 }
 
-
 void OLEDGPS::update_values(double& latitude, double& longitude, double& speed, double& altitude, float ypr_ang[]) {
-  display.setTextColor(SSD1306_WHITE);
-  display.setCursor(1, 0);
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.print("Lat: ");
-  display.print(latitude);
-  display.print(" lng: ");
-  display.print(longitude);
-  display.print(" sp: ");
-  display.print(speed);
-  display.print(" h: ");
-  display.println(altitude);
-  display.println("*--- YPR ---*");
-  display.print(ypr_ang[0]);
-  display.print(" ");
-  display.print(ypr_ang[1]);
-  display.print(" ");
-  display.println(ypr_ang[2]);
-  display.display();
+  setCursor(1, 0);
+  clearDisplay();
+  setTextSize(1);
+  print("GPS: ");
+  print(latitude);
+  print(" , ");
+  print(longitude);
+  print(speed);
+  print(" km/h, h: ");
+  println(altitude);
+  println("*--- YPR ---*");
+  print(ypr_ang[0]);
+  print(" ");
+  print(ypr_ang[1]);
+  print(" ");
+  println(ypr_ang[2]);
+  display();
 }

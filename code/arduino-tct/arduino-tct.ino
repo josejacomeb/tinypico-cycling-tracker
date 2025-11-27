@@ -119,6 +119,7 @@ void setup() {
     Serial.print(devStatus);
     Serial.println(F(")"));
   }
+  oled_display.init_imu();
   tp.DotStar_SetPixelColor(0, 255, 0);
   Serial2.begin(9600, SERIAL_8N1, RX, TX);
   Serial.print("Starting Serial 2...");
@@ -128,12 +129,15 @@ void setup() {
     while (1)
       ;
   }
+  oled_display.init_sd();
   Serial.println("initialization done.");
   while (!gps.location.isValid()) {
     while (Serial2.available() > 0) {
       gps.encode(Serial2.read());
     }
   }
+  oled_display.init_gps();
+  delay(1000);
   start = millis();
 }
 
@@ -192,7 +196,7 @@ void loop() {
     Serial.print(" Time in UTC: ");
     Serial.println(String(gps.date.year()) + "/" + String(gps.date.month()) + "/" + String(gps.date.day()) + "," + String(gps.time.hour()) + ":" + String(gps.time.minute()) + ":" + String(gps.time.second()));
 #endif
-  oled_display.update_values(lat, lng, speed, altitude, ypr);
+    oled_display.update_values(lat, lng, speed, altitude, ypr);
     if (start_writing) {
       write_gpx(lat, lng, altitude, gps.date, gps.time);
       if (end_writing) {
