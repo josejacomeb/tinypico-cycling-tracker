@@ -3,26 +3,22 @@
 OLEDGPS::OLEDGPS()
   : Adafruit_SSD1306(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET) {
 }
+void OLEDGPS::draw_bmp(int16_t x, int16_t y, const uint8_t* data, int16_t d_width, int16_t d_height, bool display_value) {
+  drawBitmap(x, y, data, d_width, d_height, 1);
+  if (display_value)
+    display();
+}
 
 void OLEDGPS::init_gps() {
-  setTextSize(2);
-  setCursor(5, 45);
-  print("OK");
-  display();
+  draw_bmp(3, 21, gps_data, gps_width, gps_height);
 }
 
 void OLEDGPS::init_sd() {
-  setTextSize(2);
-  setCursor(54, 45);
-  print("OK");
-  display();
+  draw_bmp(94, 21, sd_data, sd_width, sd_height);
 }
 
 void OLEDGPS::init_imu() {
-  setTextSize(2);
-  setCursor(100, 45);
-  print("OK");
-  display();
+  draw_bmp(42, 21, imu_data, imu_width, imu_height);
 }
 
 void OLEDGPS::init_screen() {
@@ -33,27 +29,34 @@ void OLEDGPS::init_screen() {
   }
   // Clear the buffer
   clearDisplay();
-  drawBitmap((width() - splash_width) / 2, (height() - splash_height) / 2, splash_data, splash_width, splash_height, 1);
+  drawBitmap(1, 1, logo_data, logo_width, logo_height, 1);
   display();
   setTextColor(SSD1306_WHITE);
 }
 
 void OLEDGPS::update_values(double& latitude, double& longitude, double& speed, double& altitude, float ypr_ang[]) {
-  setCursor(1, 0);
   clearDisplay();
+  draw_bmp(0, 0, active_data, active_width, active_height, false);
   setTextSize(1);
-  print("GPS: ");
-  print(latitude);
-  print(" , ");
-  print(longitude);
-  print(speed);
-  print(" km/h, h: ");
+  setCursor(55, 3);
   println(altitude);
-  println("*--- YPR ---*");
-  print(ypr_ang[0]);
-  print(" ");
-  print(ypr_ang[1]);
-  print(" ");
-  println(ypr_ang[2]);
+  setCursor(55, 26);
+  println(altitude);
+  setCursor(55, 50);
+  println(altitude);
+  display();
+}
+
+void OLEDGPS::draw_wait_screen(TinyGPSTime& gps_time) {
+  clearDisplay();
+  draw_bmp(0, 0, load_data, load_width, load_height, false);
+  setCursor(55, 2);
+  setTextSize(1);
+  hour = gps_time.hour();
+  if (hour < 5)
+    hour += 24;
+  hour -= 5;
+  snprintf(time_buffer, sizeof(time_buffer), "%02u:%02u:%02uZ", hour, gps_time.minute(), gps_time.second());
+  print(time_buffer);
   display();
 }
