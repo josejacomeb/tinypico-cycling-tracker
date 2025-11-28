@@ -58,6 +58,7 @@ OLEDGPS oled_display;
 
 void setup() {
   tp.DotStar_SetPixelColor(255, 0, 255);
+  pinMode(INPUT_PIN, INPUT);
   // Used for debug output only
   Serial.begin(115200);
   oled_display.init_screen();
@@ -71,7 +72,14 @@ void setup() {
   Serial.println(F("Initializing I2C devices..."));
   mpu.initialize();
   pinMode(INTERRUPT_PIN, INPUT);
-
+  Serial.println("Initializing SD card...");
+  if (!SD.begin(CS)) {
+    Serial.println("SD initialization failed!");
+    while (1)
+      ;
+  }
+  oled_display.init_sd();
+  delay(1000);
   /*Verify connection*/
   Serial.println(F("Testing MPU6050 connection..."));
   if (mpu.testConnection() == false) {
@@ -120,24 +128,19 @@ void setup() {
     Serial.println(F(")"));
   }
   oled_display.init_imu();
+  delay(1000);
   tp.DotStar_SetPixelColor(0, 255, 0);
   Serial2.begin(9600, SERIAL_8N1, RX, TX);
   Serial.print("Starting Serial 2...");
-  Serial.println("Initializing SD card...");
-  if (!SD.begin(CS)) {
-    Serial.println("SD initialization failed!");
-    while (1)
-      ;
-  }
-  oled_display.init_sd();
-  Serial.println("initialization done.");
   while (!gps.location.isValid()) {
     while (Serial2.available() > 0) {
       gps.encode(Serial2.read());
     }
   }
   oled_display.init_gps();
+  tp.DotStar_SetPixelColor(255, 0, 0);
   delay(1000);
+  tp.DotStar_SetBrightness(0);
   start = millis();
 }
 
@@ -196,8 +199,8 @@ void loop() {
     Serial.print(" Time in UTC: ");
     Serial.println(String(gps.date.year()) + "/" + String(gps.date.month()) + "/" + String(gps.date.day()) + "," + String(gps.time.hour()) + ":" + String(gps.time.minute()) + ":" + String(gps.time.second()));
 #endif
-    oled_display.update_values(lat, lng, speed, altitude, ypr);
     if (start_writing) {
+      oled_display.update_values(lat, lng, speed, altitude, ypr);
       write_gpx(lat, lng, altitude, gps.date, gps.time);
       if (end_writing) {
         write_file(trk_end_tag);
@@ -206,6 +209,8 @@ void loop() {
         end_writing = false;
         start_writing = false;
       }
+    } else {
+      oled_display.draw_wait_screen(gps.time);
     }
     start = millis();
   }
