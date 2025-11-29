@@ -34,16 +34,19 @@ void OLEDGPS::init_screen() {
   setTextColor(SSD1306_WHITE);
 }
 
-void OLEDGPS::update_values(double& latitude, double& longitude, double& speed, double& altitude, float ypr_ang[]) {
+void OLEDGPS::update_values(double& total_distance, double& slope_percent, String& pace, double& altitude) {
   clearDisplay();
   draw_bmp(0, 0, active_data, active_width, active_height, false);
   setTextSize(1);
-  setCursor(55, 3);
-  println(altitude);
-  setCursor(55, 26);
-  println(altitude);
-  setCursor(55, 50);
-  println(altitude);
+  setCursor(1, 1);
+  print("h: ");
+  println((int)altitude);
+  setCursor(70, 3);
+  println(total_distance);
+  setCursor(70, 26);
+  println(slope_percent);
+  setCursor(70, 50);
+  println(pace);
   display();
 }
 
