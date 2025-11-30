@@ -61,3 +61,26 @@ Tinypico based GPS + IMU + SD data logger for cycling purposes
     3. [TinyGPSPlus](https://docs.arduino.cc/libraries/adafruit-ssd1306/)
 3. Select the `UM TinyPICO` board in the Arduino IDE Tools > Board > ESP32
 4. Select the Communication Port to `/dev/ttyACM0` if you're running on Linux.
+5. Open the folder [code/arduino-tct/](code/arduino-tct/) with the IDE to flash the code to your TinyPICO Board.
+
+## Modes
+
+The following screens were converted to `.png`  and later transformed to a compatible data with the help of the Adafruit [make_splash.py](https://github.com/adafruit/Adafruit_SSD1306/blob/master/scripts/make_splash.py) script.
+
+### Loading
+
+![Loading Screen](/assets/screens/1.%20loading_components.svg "Loading Screen")
+
+This screen show the loading in realtime of the three peripherals.
+
+### Waiting
+
+![Waiting Screen](/assets/screens/2.%20wait.svg "Waiting Screen")
+
+This is the normal screen you'll see before pushing the start button.
+
+### Recording workout
+
+![Recording Screen](/assets/screens/3.%20workout.svg "Recording Screen")
+
+After pushing the start button, you will see the elevation, pace, slope, altitude and workout time in the screen.
