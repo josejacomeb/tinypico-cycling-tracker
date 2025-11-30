@@ -52,8 +52,9 @@ double lat, lng, speed_m_s, altitude;
 float ypr_ang[3] = { 0.0f, 0.0f, 0.0f };
 unsigned long start, elapsed_workout_ms, start_workout_ms, total_ms;
 const unsigned int period = 100;
-bool start_writing = false;
-bool end_writing = false;
+bool start_writing = false, end_writing = false, display_results = false;
+static unsigned int display_results_counter = 0;
+const unsigned int max_display_results_counter = 30;
 OLEDGPS oled_display;
 
 // Variables for Distance
@@ -246,9 +247,8 @@ void loop() {
       } else {
         end_writing = true;
         total_ms = millis() - start_workout_ms;
+        display_results = true;
       }
-      Serial.printf("Start writing: %d\n", start_writing);
-      Serial.printf("End writing: %d\n", end_writing);
     }
   }
   // Cycle the DotStar LED colour every 25 milliseconds
@@ -277,7 +277,8 @@ void loop() {
         double d = haversine(lastPos.lat, lastPos.lon, lat, lng);
         // ignore spurious large jumps
         if (d < 50.0) {
-          totalDist_m += d;
+          if (!display_results)
+            totalDist_m += d;
         }
       }
       lastPos = { lat, lng, altitude, true };
@@ -311,19 +312,29 @@ void loop() {
     Serial.print(" Time in UTC: ");
     Serial.println(String(gps.date.year()) + "/" + String(gps.date.month()) + "/" + String(gps.date.day()) + "," + String(gps.time.hour()) + ":" + String(gps.time.minute()) + ":" + String(gps.time.second()));
 #endif
-    if (start_writing) {
-      elapsed_workout_ms = millis() - start_workout_ms;
-      oled_display.update_values(totalDist_m, slope, pace, altitude, elapsed_workout_ms);
-      write_gpx(lat, lng, altitude, gps.date, gps.time);
-      if (end_writing) {
-        write_file(trk_end_tag);
-        write_file(trk_end_segm);
-        write_file("</gpx>");
-        end_writing = false;
-        start_writing = false;
+    if (display_results) {
+      // TODO: Resolve display_results_counter bug
+      display_results_counter += 1;
+      oled_display.display_total_results(totalDist_m, total_ms);
+      if ((display_results_counter > max_display_results_counter)) {
+        display_results = false;
+        display_results_counter = 0;
       }
     } else {
-      oled_display.draw_wait_screen(gps.time);
+      if (start_writing) {
+        elapsed_workout_ms = millis() - start_workout_ms;
+        oled_display.update_values(totalDist_m, slope, pace, altitude, elapsed_workout_ms);
+        write_gpx(lat, lng, altitude, gps.date, gps.time);
+        if (end_writing) {
+          write_file(trk_end_tag);
+          write_file(trk_end_segm);
+          write_file("</gpx>");
+          end_writing = false;
+          start_writing = false;
+        }
+      } else {
+        oled_display.draw_wait_screen(gps.time);
+      }
     }
     start = millis();
   }

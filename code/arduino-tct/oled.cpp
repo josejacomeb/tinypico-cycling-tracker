@@ -35,6 +35,17 @@ void OLEDGPS::init_screen() {
   setTextColor(SSD1306_WHITE);
 }
 
+const char* OLEDGPS::convert_ms_to_hms(unsigned long& ellapsed_workout_ms) {
+  long total_seconds = ellapsed_workout_ms / 1000;
+  unsigned long hours = (total_seconds) / conversion_hours_2_seconds;
+  unsigned long total_minutes = (total_seconds) % conversion_hours_2_seconds;
+  unsigned long minutes = total_minutes / conversion_minutes_2_seconds;
+  unsigned long seconds = total_minutes % conversion_minutes_2_seconds;
+  sprintf(chrono_buf, "%02d:%02d:%02d", hours, minutes, seconds);
+  return chrono_buf;
+}
+
+
 void OLEDGPS::update_values(double& total_distance, double& slope_percent, String& pace, double& altitude, unsigned long& ellapsed_workout_ms) {
   clearDisplay();
   draw_bmp(0, 0, active_data, active_width, active_height, false);
@@ -47,17 +58,7 @@ void OLEDGPS::update_values(double& total_distance, double& slope_percent, Strin
     print((int)altitude);
     print("m");
   } else if (change_counter > switch_altitude && change_counter < switch_elapsed_time) {
-    Serial.println("Ellapsed time");
-    long total_seconds = ellapsed_workout_ms / 1000;
-    unsigned long hours = (total_seconds) / conversion_hours_2_seconds;
-    unsigned long total_minutes = (total_seconds) % conversion_hours_2_seconds;
-    unsigned long minutes = total_minutes / conversion_minutes_2_seconds;
-    unsigned long seconds = total_minutes % conversion_minutes_2_seconds;
-    Serial.println("End");
-    sprintf(chrono_buf, "%02d:%02d:%02d", hours, minutes, seconds);
-    print(chrono_buf);
-    Serial.println(chrono_buf);
-
+    print(convert_ms_to_hms(ellapsed_workout_ms));
   } else {
     change_counter = 0;
   }
@@ -84,5 +85,20 @@ void OLEDGPS::draw_wait_screen(TinyGPSTime& gps_time) {
   hour -= 5;
   snprintf(time_buffer, sizeof(time_buffer), "%02u:%02u:%02uZ", hour, gps_time.minute(), gps_time.second());
   print(time_buffer);
+  display();
+}
+
+void OLEDGPS::display_total_results(double& total_distance, unsigned long& ellapsed_workout_ms) {
+  clearDisplay();
+  setTextSize(1);
+  setCursor(1, 1);
+  println("Total Distance: ");
+  setTextSize(3);
+  print(total_distance);
+  println("m");
+  setTextSize(1);
+  println("Elapsed time: ");
+  setTextSize(2);
+  println(convert_ms_to_hms(ellapsed_workout_ms));
   display();
 }

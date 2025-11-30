@@ -27,4 +27,6 @@ public:
   void init_imu();
   void update_values(double& total_distance, double& slope_percent, String& pace, double& altitude, unsigned long& ellapsed_workout_ms);
   void draw_wait_screen(TinyGPSTime& gps_time);
+  void display_total_results(double& total_distance, unsigned long& ellapsed_workout_ms);
+  const char* convert_ms_to_hms(unsigned long& ellapsed_workout_ms);
 };
