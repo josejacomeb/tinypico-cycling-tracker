@@ -51,7 +51,7 @@ void DMPDataReady() {
 double lat, lng, speed_m_s, altitude;
 float ypr_ang[3] = { 0.0f, 0.0f, 0.0f };
 unsigned long start, elapsed_workout_ms, start_workout_ms, total_ms;
-const unsigned int period = 100;
+const unsigned int period = 16;
 bool start_writing = false, end_writing = false, display_results = false;
 static unsigned int display_results_counter = 0;
 const unsigned int max_display_results_counter = 30;
