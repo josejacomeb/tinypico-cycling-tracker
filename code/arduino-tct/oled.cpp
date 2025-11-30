@@ -35,19 +35,41 @@ void OLEDGPS::init_screen() {
   setTextColor(SSD1306_WHITE);
 }
 
-void OLEDGPS::update_values(double& total_distance, double& slope_percent, String& pace, double& altitude) {
+void OLEDGPS::update_values(double& total_distance, double& slope_percent, String& pace, double& altitude, unsigned long& ellapsed_workout_ms) {
   clearDisplay();
   draw_bmp(0, 0, active_data, active_width, active_height, false);
   setTextSize(1);
   setCursor(1, 1);
-  print("h: ");
-  println((int)altitude);
+
+  change_counter++;
+  if (change_counter <= switch_altitude) {
+    print("h: ");
+    print((int)altitude);
+    print("m");
+  } else if (change_counter > switch_altitude && change_counter < switch_elapsed_time) {
+    Serial.println("Ellapsed time");
+    long total_seconds = ellapsed_workout_ms / 1000;
+    unsigned long hours = (total_seconds) / conversion_hours_2_seconds;
+    unsigned long total_minutes = (total_seconds) % conversion_hours_2_seconds;
+    unsigned long minutes = total_minutes / conversion_minutes_2_seconds;
+    unsigned long seconds = total_minutes % conversion_minutes_2_seconds;
+    Serial.println("End");
+    sprintf(chrono_buf, "%02d:%02d:%02d", hours, minutes, seconds);
+    print(chrono_buf);
+    Serial.println(chrono_buf);
+
+  } else {
+    change_counter = 0;
+  }
   setCursor(70, 3);
-  println(total_distance);
+  print(total_distance);
+  print("m");
   setCursor(70, 26);
-  println(slope_percent);
+  print(slope_percent);
+  print("%");
   setCursor(70, 50);
-  println(pace);
+  print(pace);
+  print("/km");
   display();
 }
 

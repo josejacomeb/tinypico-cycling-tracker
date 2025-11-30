@@ -50,7 +50,7 @@ void DMPDataReady() {
 }
 double lat, lng, speed_m_s, altitude;
 float ypr_ang[3] = { 0.0f, 0.0f, 0.0f };
-unsigned long start;
+unsigned long start, elapsed_workout_ms, start_workout_ms, total_ms;
 const unsigned int period = 100;
 bool start_writing = false;
 bool end_writing = false;
@@ -241,9 +241,11 @@ void loop() {
     if (digitalRead(INPUT_PIN)) {
       if (!start_writing) {
         start_writing = true;
+        start_workout_ms = millis();
         write_header(gps);
       } else {
         end_writing = true;
+        total_ms = millis() - start_workout_ms;
       }
       Serial.printf("Start writing: %d\n", start_writing);
       Serial.printf("End writing: %d\n", end_writing);
@@ -290,9 +292,6 @@ void loop() {
       pace = paceFromSpeed(speed_m_s);
     }
   }
-
-
-
   if (millis() - start > period) {
 #if PRINT
     Serial.print("YPR: ");
@@ -313,7 +312,8 @@ void loop() {
     Serial.println(String(gps.date.year()) + "/" + String(gps.date.month()) + "/" + String(gps.date.day()) + "," + String(gps.time.hour()) + ":" + String(gps.time.minute()) + ":" + String(gps.time.second()));
 #endif
     if (start_writing) {
-      oled_display.update_values(totalDist_m, slope, pace, altitude);
+      elapsed_workout_ms = millis() - start_workout_ms;
+      oled_display.update_values(totalDist_m, slope, pace, altitude, elapsed_workout_ms);
       write_gpx(lat, lng, altitude, gps.date, gps.time);
       if (end_writing) {
         write_file(trk_end_tag);
