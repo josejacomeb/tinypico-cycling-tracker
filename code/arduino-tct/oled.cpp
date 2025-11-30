@@ -1,3 +1,4 @@
+#include "graphics.hpp"
 #include "oled.hpp"
 
 OLEDGPS::OLEDGPS()
