@@ -129,6 +129,89 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "Mechanical:MountingHole"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom no)
+			(on_board yes)
+			(property "Reference" "H"
+				(at 0 5.08 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "MountingHole"
+				(at 0 3.175 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "~"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Mounting Hole without connection"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "mounting hole"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_fp_filters" "MountingHole*"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "MountingHole_0_1"
+				(circle
+					(center 0 0)
+					(radius 1.27)
+					(stroke
+						(width 1.27)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "Soldered:SSD1306-0.96{dblquote}-I2C-OLED-Display"
 			(exclude_from_sim no)
 			(in_bom yes)
@@ -1445,7 +1528,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "19e5c97c-3551-41fd-ae4a-b73e92bed0de")
-		(property "Reference" "#FLG?"
+		(property "Reference" "#FLG03"
 			(at 161.29 45.085 0)
 			(effects
 				(font
@@ -1508,6 +1591,69 @@
 		)
 	)
 	(symbol
+		(lib_id "Mechanical:MountingHole")
+		(at 137.16 86.36 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(dnp no)
+		(uuid "2448aaa0-9dad-44c2-9c8b-338b8baa19d0")
+		(property "Reference" "H8"
+			(at 139.7 85.0899 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "MountingHole"
+			(at 139.7 87.6299 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "MountingHole:MountingHole_3mm"
+			(at 137.16 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 137.16 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Mounting Hole without connection"
+			(at 137.16 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project "TinyPico-Cycling-Tracker"
+				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/087e4c3f-dadb-4b00-b947-e0c7adeb7ff5"
+					(reference "H8")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Switch:SW_Push")
 		(at 161.29 73.66 90)
 		(unit 1)
@@ -1517,7 +1663,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "2b78ed9c-9682-47f7-8414-13262cedff7d")
-		(property "Reference" "SW?"
+		(property "Reference" "SW2"
 			(at 162.56 72.3899 90)
 			(effects
 				(font
@@ -1593,7 +1739,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "423a7411-154a-4e62-9962-ee880420715f")
-		(property "Reference" "#PWR?"
+		(property "Reference" "#PWR01"
 			(at 168.91 50.8 0)
 			(effects
 				(font
@@ -1656,6 +1802,69 @@
 		)
 	)
 	(symbol
+		(lib_id "Mechanical:MountingHole")
+		(at 137.16 81.28 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(dnp no)
+		(uuid "453b22a4-f822-438a-a4e9-ec74f36a1d5b")
+		(property "Reference" "H6"
+			(at 139.7 80.0099 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "MountingHole"
+			(at 139.7 82.5499 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "MountingHole:MountingHole_3mm"
+			(at 137.16 81.28 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 137.16 81.28 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Mounting Hole without connection"
+			(at 137.16 81.28 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project "TinyPico-Cycling-Tracker"
+				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/087e4c3f-dadb-4b00-b947-e0c7adeb7ff5"
+					(reference "H6")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "usini_kicad_sensors:module_mpu6050")
 		(at 179.07 82.55 0)
 		(unit 1)
@@ -1665,7 +1874,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "56658d15-aca4-4e34-aa25-3a8351a4c7ea")
-		(property "Reference" "U?"
+		(property "Reference" "U6"
 			(at 199.39 72.3899 0)
 			(effects
 				(font
@@ -1759,7 +1968,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "78974cca-8786-4109-ad02-f96fca7eb5cf")
-		(property "Reference" "U?"
+		(property "Reference" "U7"
 			(at 193.04 50.1649 0)
 			(effects
 				(font
@@ -1841,7 +2050,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "8dc86013-d03a-4b5c-9369-34dfba158c55")
-		(property "Reference" "R?"
+		(property "Reference" "R2"
 			(at 163.83 57.1499 0)
 			(effects
 				(font
@@ -1908,6 +2117,134 @@
 		)
 	)
 	(symbol
+		(lib_id "Mechanical:MountingHole")
+		(at 132.08 86.36 0)
+		(mirror y)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(dnp no)
+		(uuid "b0aa3856-e5a0-4f75-949a-21a979cae4fc")
+		(property "Reference" "H7"
+			(at 129.54 85.0899 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "MountingHole"
+			(at 129.54 87.6299 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "MountingHole:MountingHole_3mm"
+			(at 132.08 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 132.08 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Mounting Hole without connection"
+			(at 132.08 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project "TinyPico-Cycling-Tracker"
+				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/087e4c3f-dadb-4b00-b947-e0c7adeb7ff5"
+					(reference "H7")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Mechanical:MountingHole")
+		(at 132.08 81.28 0)
+		(mirror y)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(dnp no)
+		(uuid "b44c0bdc-c95a-490d-9fbb-39c6e8546e72")
+		(property "Reference" "H5"
+			(at 129.54 80.0099 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "MountingHole"
+			(at 129.54 82.5499 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "MountingHole:MountingHole_3mm"
+			(at 132.08 81.28 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 132.08 81.28 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Mounting Hole without connection"
+			(at 132.08 81.28 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project "TinyPico-Cycling-Tracker"
+				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/087e4c3f-dadb-4b00-b947-e0c7adeb7ff5"
+					(reference "H5")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:GND")
 		(at 168.91 91.44 0)
 		(unit 1)
@@ -1917,7 +2254,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "f39032e1-7034-46c3-a091-63d6d3167daa")
-		(property "Reference" "#PWR?"
+		(property "Reference" "#PWR06"
 			(at 168.91 97.79 0)
 			(effects
 				(font
@@ -1989,7 +2326,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "fb143a61-b6af-46fc-8d66-ce6345b24be8")
-		(property "Reference" "#FLG?"
+		(property "Reference" "#FLG01"
 			(at 212.09 80.645 0)
 			(effects
 				(font

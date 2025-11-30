@@ -5,6 +5,89 @@
 	(uuid "0c30b880-edbf-4276-9636-70d4766e012a")
 	(paper "A4")
 	(lib_symbols
+		(symbol "Mechanical:MountingHole"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom no)
+			(on_board yes)
+			(property "Reference" "H"
+				(at 0 5.08 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "MountingHole"
+				(at 0 3.175 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "~"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Mounting Hole without connection"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "mounting hole"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_fp_filters" "MountingHole*"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "MountingHole_0_1"
+				(circle
+					(center 0 0)
+					(radius 1.27)
+					(stroke
+						(width 1.27)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "MicroSD-Card-Adapter:_MicroSD-Card-Adapter"
 			(exclude_from_sim no)
 			(in_bom yes)
@@ -1094,10 +1177,6 @@
 		(uuid "24bc111c-b5d6-4acb-ab71-2597bf1f20fc")
 	)
 	(no_connect
-		(at 129.54 87.63)
-		(uuid "3010da3b-3fa8-4e59-9969-909f415634c1")
-	)
-	(no_connect
 		(at 149.86 87.63)
 		(uuid "93abff4e-916c-4376-9586-73a27020b08c")
 	)
@@ -1108,6 +1187,10 @@
 	(no_connect
 		(at 149.86 69.85)
 		(uuid "e2943973-157d-4802-871e-2088454b5d9a")
+	)
+	(no_connect
+		(at 149.86 80.01)
+		(uuid "e9e67b17-c49b-426b-9dfb-171cc4b8607c")
 	)
 	(no_connect
 		(at 149.86 85.09)
@@ -1149,56 +1232,6 @@
 	)
 	(wire
 		(pts
-			(xy 152.4 68.58) (xy 152.4 72.39)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "1d1102c6-6048-4e7a-a986-57082acb9353")
-	)
-	(wire
-		(pts
-			(xy 161.29 87.63) (xy 156.21 87.63)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "1eb2904e-55a9-4baa-a505-d31edeb30b79")
-	)
-	(wire
-		(pts
-			(xy 149.86 80.01) (xy 152.4 80.01)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "36dacea4-1b0c-4ecb-aa65-ac7a84d05a6e")
-	)
-	(wire
-		(pts
-			(xy 157.48 92.71) (xy 157.48 85.09)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "391e05ed-614e-440e-89a7-94a34ae0135b")
-	)
-	(wire
-		(pts
-			(xy 107.95 62.23) (xy 156.21 62.23)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "39332b2e-455d-4201-8752-d1a1eeefd8fe")
-	)
-	(wire
-		(pts
 			(xy 124.46 92.71) (xy 124.46 102.87)
 		)
 		(stroke
@@ -1226,6 +1259,26 @@
 			(type default)
 		)
 		(uuid "3f59a551-5428-4eae-a43e-f5904de70d17")
+	)
+	(wire
+		(pts
+			(xy 107.95 62.23) (xy 156.21 62.23)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "438466d7-23dc-43c5-8c94-b6b0e8786b44")
+	)
+	(wire
+		(pts
+			(xy 157.48 92.71) (xy 157.48 85.09)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "4588403c-464d-4abc-9d73-fa26a0186263")
 	)
 	(wire
 		(pts
@@ -1269,16 +1322,6 @@
 	)
 	(wire
 		(pts
-			(xy 149.86 92.71) (xy 157.48 92.71)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "55c071e5-6f1a-4d53-bcad-240f73e4406b")
-	)
-	(wire
-		(pts
 			(xy 161.29 82.55) (xy 160.02 82.55)
 		)
 		(stroke
@@ -1296,6 +1339,16 @@
 			(type default)
 		)
 		(uuid "5c5249fc-e074-4375-ad19-fd097f591b0e")
+	)
+	(wire
+		(pts
+			(xy 160.02 77.47) (xy 163.83 77.47)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "663cfca3-955c-49e4-9156-e0b2f2331acc")
 	)
 	(wire
 		(pts
@@ -1349,6 +1402,16 @@
 	)
 	(wire
 		(pts
+			(xy 152.4 68.58) (xy 152.4 72.39)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "83404bae-a015-48e9-b6be-4c9edc47e78e")
+	)
+	(wire
+		(pts
 			(xy 129.54 69.85) (xy 119.38 69.85)
 		)
 		(stroke
@@ -1356,6 +1419,16 @@
 			(type default)
 		)
 		(uuid "87f90df4-06dc-46ba-94c5-3fda1b912005")
+	)
+	(wire
+		(pts
+			(xy 125.73 87.63) (xy 129.54 87.63)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "92034001-867b-4e8a-9eb8-47b28e9cc198")
 	)
 	(wire
 		(pts
@@ -1396,16 +1469,6 @@
 			(type default)
 		)
 		(uuid "a68a30d8-84e3-4d35-89d7-6d42b6603640")
-	)
-	(wire
-		(pts
-			(xy 160.02 77.47) (xy 163.83 77.47)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "a72ff79e-df0c-4d08-84c5-b1f8a70ade10")
 	)
 	(wire
 		(pts
@@ -1459,6 +1522,16 @@
 	)
 	(wire
 		(pts
+			(xy 156.21 87.63) (xy 161.29 87.63)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "cb575277-3dc8-4d1d-9db5-241c21a2d181")
+	)
+	(wire
+		(pts
 			(xy 118.11 77.47) (xy 120.65 77.47)
 		)
 		(stroke
@@ -1466,6 +1539,16 @@
 			(type default)
 		)
 		(uuid "d02802e5-831f-4e6c-9364-037fa9340426")
+	)
+	(wire
+		(pts
+			(xy 149.86 92.71) (xy 157.48 92.71)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d8663cef-f87e-47fc-860a-2993398913e1")
 	)
 	(wire
 		(pts
@@ -1540,12 +1623,12 @@
 	)
 	(hierarchical_label "SW_TP"
 		(shape input)
-		(at 152.4 80.01 0)
+		(at 125.73 87.63 180)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
-			(justify left)
+			(justify right)
 		)
 		(uuid "4e965a22-e91f-45e0-88d8-eabb740b3ca2")
 	)
@@ -1581,6 +1664,69 @@
 			(justify right)
 		)
 		(uuid "ea225c7d-eb45-44ed-af13-0c780ad10238")
+	)
+	(symbol
+		(lib_id "Mechanical:MountingHole")
+		(at 91.44 96.52 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(dnp no)
+		(uuid "0e109551-94ea-46b8-b796-c5e631d8b12e")
+		(property "Reference" "H2"
+			(at 93.98 95.2499 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "MountingHole"
+			(at 93.98 97.7899 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "MountingHole:MountingHole_3mm"
+			(at 91.44 96.52 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 91.44 96.52 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Mounting Hole without connection"
+			(at 91.44 96.52 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project ""
+				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/a53ff72c-e30f-413f-a95e-3ac33687ad4a"
+					(reference "H2")
+					(unit 1)
+				)
+			)
+		)
 	)
 	(symbol
 		(lib_id "uBlox-NEO-6M:_GPS6MV2")
@@ -1652,7 +1798,7 @@
 		(instances
 			(project "Bottom_board"
 				(path "/0c30b880-edbf-4276-9636-70d4766e012a"
-					(reference "U?")
+					(reference "U3")
 					(unit 1)
 				)
 			)
@@ -1724,13 +1870,77 @@
 		(instances
 			(project "Bottom_board"
 				(path "/0c30b880-edbf-4276-9636-70d4766e012a"
-					(reference "#FLG?")
+					(reference "#FLG0101")
 					(unit 1)
 				)
 			)
 			(project ""
 				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/a53ff72c-e30f-413f-a95e-3ac33687ad4a"
 					(reference "#FLG02")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Mechanical:MountingHole")
+		(at 86.36 107.95 0)
+		(mirror y)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(dnp no)
+		(uuid "5ed9f9f8-17cc-4451-80a3-a445a65b7079")
+		(property "Reference" "H3"
+			(at 83.82 106.6799 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "MountingHole"
+			(at 83.82 109.2199 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "MountingHole:MountingHole_3mm"
+			(at 86.36 107.95 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 86.36 107.95 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Mounting Hole without connection"
+			(at 86.36 107.95 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project "TinyPico-Cycling-Tracker"
+				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/a53ff72c-e30f-413f-a95e-3ac33687ad4a"
+					(reference "H3")
 					(unit 1)
 				)
 			)
@@ -1852,7 +2062,7 @@
 		(instances
 			(project "Bottom_board"
 				(path "/0c30b880-edbf-4276-9636-70d4766e012a"
-					(reference "U?")
+					(reference "U2")
 					(unit 1)
 				)
 			)
@@ -1924,7 +2134,7 @@
 		(instances
 			(project "Bottom_board"
 				(path "/0c30b880-edbf-4276-9636-70d4766e012a"
-					(reference "#PWR?")
+					(reference "#PWR0101")
 					(unit 1)
 				)
 			)
@@ -1996,7 +2206,7 @@
 		(instances
 			(project "Bottom_board"
 				(path "/0c30b880-edbf-4276-9636-70d4766e012a"
-					(reference "#PWR?")
+					(reference "#PWR0102")
 					(unit 1)
 				)
 			)
@@ -2084,13 +2294,77 @@
 		(instances
 			(project "Bottom_board"
 				(path "/0c30b880-edbf-4276-9636-70d4766e012a"
-					(reference "U?")
+					(reference "U1")
 					(unit 1)
 				)
 			)
 			(project ""
 				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/a53ff72c-e30f-413f-a95e-3ac33687ad4a"
 					(reference "U10")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Mechanical:MountingHole")
+		(at 91.44 107.95 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "970c3c90-aec1-4c26-81de-1a5516ce5e03")
+		(property "Reference" "H4"
+			(at 93.98 106.6799 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "MountingHole"
+			(at 93.98 109.2199 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "MountingHole:MountingHole_3mm"
+			(at 91.44 107.95 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 91.44 107.95 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Mounting Hole without connection"
+			(at 91.44 107.95 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project "TinyPico-Cycling-Tracker"
+				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/a53ff72c-e30f-413f-a95e-3ac33687ad4a"
+					(reference "H4")
 					(unit 1)
 				)
 			)
@@ -2156,13 +2430,77 @@
 		(instances
 			(project "Bottom_board"
 				(path "/0c30b880-edbf-4276-9636-70d4766e012a"
-					(reference "#PWR?")
+					(reference "#PWR0103")
 					(unit 1)
 				)
 			)
 			(project ""
 				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/a53ff72c-e30f-413f-a95e-3ac33687ad4a"
 					(reference "#PWR08")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Mechanical:MountingHole")
+		(at 86.36 96.52 0)
+		(mirror y)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(dnp no)
+		(uuid "d472c113-f4d0-4b95-adaf-6b98f03a4eb6")
+		(property "Reference" "H1"
+			(at 83.82 95.2499 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "MountingHole"
+			(at 83.82 97.7899 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "MountingHole:MountingHole_3mm"
+			(at 86.36 96.52 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 86.36 96.52 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Mounting Hole without connection"
+			(at 86.36 96.52 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project ""
+				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/a53ff72c-e30f-413f-a95e-3ac33687ad4a"
+					(reference "H1")
 					(unit 1)
 				)
 			)
