@@ -30,14 +30,18 @@ void write_file(const char* message) {
   sd_gpx_file = SD.open(GPX_file_path, FILE_APPEND);
   // if the file opened okay, write to it:
   if (sd_gpx_file) {
-    Serial.printf("Writing to %s", GPX_file_path);
     sd_gpx_file.println(message);
     sd_gpx_file.close();  // close the file:
+#if PRINT
+    Serial.printf("Writing to %s", GPX_file_path);
     Serial.print(message);
     Serial.println(" completed...");
+#endif
   } else {
+#if PRINT
     Serial.print("error opening file ");
     Serial.println(GPX_file_path);
+#endif
   }
 }
 
