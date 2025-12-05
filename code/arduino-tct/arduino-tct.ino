@@ -25,6 +25,15 @@ int const INTERRUPT_PIN = 2;  // Define the interruption #0 pin
 // Initialise the TinyPICO library
 TinyPICO tp = TinyPICO();
 
+enum class State {
+  LOADING,
+  WAITING,
+  START_WORKOUT,
+  END_WORKOUT,
+  SUMMARY
+};
+enum State m_state;
+
 bool blinkState;
 
 /*---MPU6050 Control/Status Variables---*/
@@ -52,9 +61,8 @@ double lat, lng, speed_m_s, altitude;
 float ypr_ang[3] = { 0.0f, 0.0f, 0.0f };
 unsigned long start, elapsed_workout_ms, start_workout_ms, total_ms;
 const unsigned int period = 16;
-bool start_writing = false, end_writing = false, display_results = false;
-static unsigned int display_results_counter = 0;
-const unsigned int max_display_results_counter = 30;
+unsigned int display_results_counter = 1;
+const unsigned int max_display_results_counter = 60;
 OLEDGPS oled_display;
 
 // Variables for Distance
@@ -233,6 +241,7 @@ void setup() {
   tp.DotStar_SetPixelColor(255, 0, 0);
   delay(1000);
   tp.DotStar_SetBrightness(0);
+  m_state = State::WAITING;
   start = millis();
 }
 
@@ -240,14 +249,13 @@ void loop() {
   if (!digitalRead(INPUT_PIN)) {
     delay(500);
     if (digitalRead(INPUT_PIN)) {
-      if (!start_writing) {
-        start_writing = true;
+      if (m_state != State::START_WORKOUT) {
         start_workout_ms = millis();
+        m_state = State::START_WORKOUT;
         write_header(gps);
       } else {
-        end_writing = true;
         total_ms = millis() - start_workout_ms;
-        display_results = true;
+        m_state = State::END_WORKOUT;
       }
     }
   }
@@ -277,7 +285,7 @@ void loop() {
         double d = haversine(lastPos.lat, lastPos.lon, lat, lng);
         // ignore spurious large jumps
         if (d < 50.0) {
-          if (!display_results)
+          if (m_state == State::START_WORKOUT)
             totalDist_m += d;
         }
       }
@@ -312,29 +320,29 @@ void loop() {
     Serial.print(" Time in UTC: ");
     Serial.println(String(gps.date.year()) + "/" + String(gps.date.month()) + "/" + String(gps.date.day()) + "," + String(gps.time.hour()) + ":" + String(gps.time.minute()) + ":" + String(gps.time.second()));
 #endif
-    if (display_results) {
-      // TODO: Resolve display_results_counter bug
-      display_results_counter += 1;
-      oled_display.display_total_results(totalDist_m, total_ms);
-      if ((display_results_counter > max_display_results_counter)) {
-        display_results = false;
-        display_results_counter = 0;
-      }
-    } else {
-      if (start_writing) {
+    switch (m_state) {
+      case State::WAITING:
+        oled_display.draw_wait_screen(gps.time);
+        break;
+      case State::START_WORKOUT:
         elapsed_workout_ms = millis() - start_workout_ms;
         oled_display.update_values(totalDist_m, slope, pace, altitude, elapsed_workout_ms);
         write_gpx(lat, lng, altitude, gps.date, gps.time);
-        if (end_writing) {
-          write_file(trk_end_tag);
-          write_file(trk_end_segm);
-          write_file("</gpx>");
-          end_writing = false;
-          start_writing = false;
+        break;
+      case State::END_WORKOUT:
+        write_file(trk_end_tag);
+        write_file(trk_end_segm);
+        write_file("</gpx>");
+        m_state = State::SUMMARY;
+        break;
+      case State::SUMMARY:
+        display_results_counter++;
+        oled_display.display_total_results(totalDist_m, total_ms);
+        if (display_results_counter > max_display_results_counter) {
+          display_results_counter = 1;
+          m_state = State::WAITING;
         }
-      } else {
-        oled_display.draw_wait_screen(gps.time);
-      }
+        break;
     }
     start = millis();
   }
