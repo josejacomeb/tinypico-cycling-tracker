@@ -46,7 +46,7 @@ const char* OLEDGPS::convert_ms_to_hms(unsigned long& ellapsed_workout_ms) {
 }
 
 
-void OLEDGPS::update_values(double& total_distance, double& slope_percent, String& pace, double& altitude, unsigned long& ellapsed_workout_ms) {
+void OLEDGPS::update_values(double& total_distance, double& slope_percent, char* pace, double& altitude, unsigned long& ellapsed_workout_ms) {
   clearDisplay();
   draw_bmp(0, 0, active_data, active_width, active_height, false);
   setTextSize(1);

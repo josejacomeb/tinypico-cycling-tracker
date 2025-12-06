@@ -8,8 +8,9 @@
 #include <TinyGPS++.h>
 #include <TinyPICO.h>
 
-#include "writter.hpp"
 #include "oled.hpp"
+#include "writter.hpp"
+#include "workout.hpp"
 
 // TinyPICO PINS
 // Digital UART Pins for ESP32-PICO-D4
@@ -59,102 +60,13 @@ void DMPDataReady() {
 }
 double lat, lng, speed_m_s, altitude;
 float ypr_ang[3] = { 0.0f, 0.0f, 0.0f };
-unsigned long start, elapsed_workout_ms, start_workout_ms, total_ms;
+unsigned long start, elapsed_workout_ms;
 const unsigned int period = 16;
 unsigned int display_results_counter = 1;
 const unsigned int max_display_results_counter = 60;
-OLEDGPS oled_display;
-
-// Variables for Distance
-// ---- Slope blending ----
-float ALPHA_IMU = 0.6;
-float GPS_GRADE_WINDOW = 25.0;
-
-// ---- Position tracking ----
-struct Pos {
-  double lat;
-  double lon;
-  double alt;
-  bool valid;
-};
-Pos lastPos = { 0, 0, 0, false };
-double totalDist_m = 0;
-
-// ---- Window buffer for GPS grade ----
-struct WP {
-  double lat, lon, alt, accumDist;
-  bool valid;
-};
-const int MAXW = 60;
-WP win[MAXW];
-int win_start = 0, win_end = 0;
-
-// ---- Timing ----
-unsigned long lastDisplay = 0;
-unsigned long lastLog = 0;
 String pace;
-double slope;
-
-double haversine(double lat1, double lon1, double lat2, double lon2) {
-  const double R = 6371000.0;
-  double dlat = (lat2 - lat1) * DEG_TO_RAD;
-  double dlon = (lon2 - lon1) * DEG_TO_RAD;
-  double a = sin(dlat / 2) * sin(dlat / 2) + cos(lat1 * DEG_TO_RAD) * cos(lat2 * DEG_TO_RAD) * sin(dlon / 2) * sin(dlon / 2);
-  return R * 2 * atan2(sqrt(a), sqrt(1 - a));
-}
-
-void pushWP(double lat, double lon, double alt) {
-  WP wp = { lat, lon, alt, 0.0, true };
-  if (!win[win_end].valid) {
-    win[win_end] = wp;
-    win_end = (win_end + 1) % MAXW;
-    return;
-  }
-  int prev = (win_end - 1 + MAXW) % MAXW;
-  double d = haversine(win[prev].lat, win[prev].lon, lat, lon);
-  wp.accumDist = win[prev].accumDist + d;
-  win[win_end] = wp;
-  win_end = (win_end + 1) % MAXW;
-
-  while (true) {
-    int s = win_start;
-    int e = (win_end - 1 + MAXW) % MAXW;
-    if (!win[s].valid || !win[e].valid) break;
-    double wd = win[e].accumDist - win[s].accumDist;
-    if (wd > GPS_GRADE_WINDOW) {
-      win[s].valid = false;
-      win_start = (win_start + 1) % MAXW;
-    } else break;
-  }
-}
-
-bool gpsGrade(double &grade) {
-  int s = win_start;
-  int e = (win_end - 1 + MAXW) % MAXW;
-  if (!win[s].valid || !win[e].valid) return false;
-  if (s == e) return false;
-
-  double hd = win[e].accumDist - win[s].accumDist;
-  if (hd < 3.0) return false;
-
-  double ed = win[e].alt - win[s].alt;
-  grade = (ed / hd) * 100.0;
-  return true;
-}
-
-String paceFromSpeed(double speed_m_s) {
-  if (speed_m_s < 0.5) return "--:--";
-  double secpkm = 1000.0 / speed_m_s;
-  int mm = int(secpkm / 60);
-  int ss = int(secpkm - mm * 60);
-  if (ss == 60) {
-    mm++;
-    ss = 0;
-  }
-  char buf[10];
-  sprintf(buf, "%02d:%02d", mm, ss);
-  return String(buf);
-}
+OLEDGPS oled_display;
+Workout workout;
 
 void setup() {
   tp.DotStar_SetPixelColor(255, 0, 255);
@@ -250,11 +162,11 @@ void loop() {
     delay(500);
     if (digitalRead(INPUT_PIN)) {
       if (m_state != State::START_WORKOUT) {
-        start_workout_ms = millis();
+        workout.start();
         m_state = State::START_WORKOUT;
         write_header(gps);
       } else {
-        total_ms = millis() - start_workout_ms;
+        workout.end();
         m_state = State::END_WORKOUT;
       }
     }
@@ -271,7 +183,6 @@ void loop() {
     ypr_ang[1] = ypr[1] * 180 / M_PI;
     ypr_ang[2] = ypr[2] * 180 / M_PI;
   }
-  float imuSlopePercent = tan(ypr_ang[1] * DEG_TO_RAD) * 100.0;
   while (Serial2.available() > 0) {
     gps.encode(Serial2.read());
     if (gps.location.isUpdated() && gps.location.isValid()) {
@@ -281,24 +192,19 @@ void loop() {
       speed_m_s = gps.speed.isValid() ? gps.speed.mps() : 0.0;
       unsigned long ts = millis();
       // distance accumulation
-      if (lastPos.valid) {
-        double d = haversine(lastPos.lat, lastPos.lon, lat, lng);
+      if (workout.lastPos.valid) {
+       double d = workout.haversine(workout.lastPos.lat, workout.lastPos.lon, lat, lng);
         // ignore spurious large jumps
         if (d < 50.0) {
           if (m_state == State::START_WORKOUT)
-            totalDist_m += d;
+            workout.totalDist_m += d;
         }
       }
-      lastPos = { lat, lng, altitude, true };
-      pushWP(lat, lng, altitude);
-
-      double ggrade = 0, slope = imuSlopePercent;
-      if (gpsGrade(ggrade)) {
-        slope = ALPHA_IMU * imuSlopePercent + (1.0 - ALPHA_IMU) * ggrade;
-      }
+      workout.lastPos = { lat, lng, altitude, true };
+      workout.pushWP(lat, lng, altitude);
 
       double speed_kmh = speed_m_s * 3.6;
-      pace = paceFromSpeed(speed_m_s);
+      pace = workout.paceFromSpeed(speed_m_s);
     }
   }
   if (millis() - start > period) {
@@ -325,8 +231,8 @@ void loop() {
         oled_display.draw_wait_screen(gps.time);
         break;
       case State::START_WORKOUT:
-        elapsed_workout_ms = millis() - start_workout_ms;
-        oled_display.update_values(totalDist_m, slope, pace, altitude, elapsed_workout_ms);
+        elapsed_workout_ms = millis() - workout.start_workout_ms;
+        oled_display.update_values(workout.totalDist_m, workout.get_slope(ypr[1]), workout.paceFromSpeed(speed_m_s), altitude, elapsed_workout_ms);
         write_gpx(lat, lng, altitude, gps.date, gps.time);
         break;
       case State::END_WORKOUT:
@@ -337,7 +243,7 @@ void loop() {
         break;
       case State::SUMMARY:
         display_results_counter++;
-        oled_display.display_total_results(totalDist_m, total_ms);
+        oled_display.display_total_results(workout.totalDist_m, workout.total_ms);
         if (display_results_counter > max_display_results_counter) {
           display_results_counter = 1;
           m_state = State::WAITING;
