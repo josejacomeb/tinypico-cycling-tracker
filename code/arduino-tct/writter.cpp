@@ -1,5 +1,7 @@
 #include "writter.hpp"
 
+// ---- GPX File Constants ----
+
 const char* header = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
 const char* gpx_header = "<gpx xmlns=\"http://www.topografix.com/GPX/1/1\" "
                          "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
@@ -14,6 +16,8 @@ const char* trk_end_segm = "</trkseg>";
 File sd_gpx_file;
 char GPX_file_path[21];
 
+// ---- GPX Writing Methods ----
+
 void write_gpx(TinyGPSLocation& Pos1, double& elevation, TinyGPSDate& date, TinyGPSTime& time) {
   String trkpt = String("<trkpt lat=\"" + String(Pos1.lat(), 6) + "\" lon=\"" + String(Pos1.lng(), 6) + "\">");
   write_file(trkpt.c_str());
@@ -25,13 +29,13 @@ void write_gpx(TinyGPSLocation& Pos1, double& elevation, TinyGPSDate& date, Tiny
 }
 
 void write_file(const char* message) {
-  // open the file. note that only one file can be open at a time,
+  // Open the file. Note that only one file can be open at a time,
   // so you have to close this one before opening another.
   sd_gpx_file = SD.open(GPX_file_path, FILE_APPEND);
-  // if the file opened okay, write to it:
+  // If the file opened okay, write to it:
   if (sd_gpx_file) {
     sd_gpx_file.println(message);
-    sd_gpx_file.close();  // close the file:
+    sd_gpx_file.close();  // Close the file:
 #if PRINT
     Serial.printf("Writing to %s", GPX_file_path);
     Serial.print(message);
@@ -44,6 +48,8 @@ void write_file(const char* message) {
 #endif
   }
 }
+
+// ---- Time Conversion Methods ----
 
 const char* return_time_utc(TinyGPSDate& date, TinyGPSTime& time) {
   // Define a static buffer to hold the formatted string.
@@ -67,6 +73,8 @@ const char* return_time_utc(TinyGPSDate& date, TinyGPSTime& time) {
   // Return the pointer to the static buffer.
   return time_buffer;
 }
+
+// ---- Header Writing Methods ----
 
 void write_header(TinyGPSPlus& gps) {
   // Use snprintf to format and create the entire filename string safely.

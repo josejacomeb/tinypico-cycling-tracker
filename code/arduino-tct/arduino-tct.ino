@@ -33,26 +33,27 @@
 // Initialise the TinyPICO library
 TinyPICO tp = TinyPICO();
 
-/*---MPU6050 Control/Status Variables---*/
-bool DMPReady = false;   // Set true if DMP init was successful
-uint8_t MPUIntStatus;    // Holds actual interrupt status byte from MPU
-uint8_t devStatus;       // Return status after each device operation (0 = success, !0 = error)
-uint16_t packetSize;     // Expected DMP packet size (default is 42 bytes)
-uint8_t FIFOBuffer[64];  // FIFO storage buffer
+// ---- MPU6050 Control/Status Variables ----
+bool DMPReady = false;               // Set true if DMP init was successful
+uint8_t MPUIntStatus;                // Holds actual interrupt status byte from MPU
+uint8_t devStatus;                   // Return status after each device operation (0 = success, !0 = error)
+uint16_t packetSize;                 // Expected DMP packet size (default is 42 bytes)
+uint8_t FIFOBuffer[64];              // FIFO storage buffer
 
-/*---Orientation/Motion Variables---*/
-Quaternion q;         // [w, x, y, z]         Quaternion container
-VectorFloat gravity;  // [x, y, z]            Gravity vector
-float ypr[3];         // [yaw, pitch, roll]   Yaw/Pitch/Roll container and gravity vector
+// ---- Orientation/Motion Variables ----
+Quaternion q;                        // [w, x, y, z] Quaternion container
+VectorFloat gravity;                 // [x, y, z] Gravity vector
+float ypr[3];                        // [yaw, pitch, roll] Yaw/Pitch/Roll container and gravity vector
 MPU6050 mpu;
 
-/*------Interrupt detection routine------*/
+// ---- Interrupt detection routine ----
 volatile bool MPUInterrupt = false;  // Indicates whether MPU6050 interrupt pin has gone high
+
 void DMPDataReady() {
   MPUInterrupt = true;
 }
 
-// The GPS Variables
+// ---- GPS Variables ----
 TinyGPSPlus gps;
 double speed_m_s, altitude;
 unsigned long start;
@@ -60,11 +61,11 @@ const unsigned int period = 16;
 unsigned int display_results_counter = 1;
 const unsigned int max_display_results_counter = 60;
 
-// Extra objects
+// ---- Application Objects ----
 OLEDGPS oled_display;
 Workout workout;
 
-// States
+// ---- State Machine ----
 enum class State {
   LOADING,
   WAITING,
@@ -72,7 +73,8 @@ enum class State {
   END_WORKOUT,
   SUMMARY
 };
-enum State m_state;
+
+State m_state;
 
 const unsigned int led_time = 5000;
 

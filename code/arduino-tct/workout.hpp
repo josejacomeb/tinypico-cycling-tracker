@@ -10,7 +10,7 @@ struct WP {
 };
 
 class Workout {
-private:
+ private:
   // Variables for Distance
   // ---- Slope blending ----
   float ALPHA_IMU = 0.6, GPS_GRADE_WINDOW = 25.0;
@@ -31,7 +31,8 @@ private:
   bool gpsGrade(double& grade);
   unsigned long elapsed_workout_ms, start_workout_ms, total_ms;
   Pos lastPos;
-public:
+
+ public:
   void start();
   void end();
   void reset();
