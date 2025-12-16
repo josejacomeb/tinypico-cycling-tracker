@@ -14,8 +14,8 @@ const char* trk_end_segm = "</trkseg>";
 File sd_gpx_file;
 char GPX_file_path[21];
 
-void write_gpx(double& latitude, double& lng, double& elevation, TinyGPSDate& date, TinyGPSTime& time) {
-  String trkpt = String("<trkpt lat=\"" + String(latitude, 6) + "\" lon=\"" + String(lng, 6) + "\">");
+void write_gpx(TinyGPSLocation& Pos1, double& elevation, TinyGPSDate& date, TinyGPSTime& time) {
+  String trkpt = String("<trkpt lat=\"" + String(Pos1.lat(), 6) + "\" lon=\"" + String(Pos1.lng(), 6) + "\">");
   write_file(trkpt.c_str());
   String elept = String("<ele>" + String(elevation, 3) + "</ele>");
   write_file(elept.c_str());
