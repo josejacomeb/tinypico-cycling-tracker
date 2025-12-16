@@ -8,7 +8,7 @@ void Workout::start() {
 }
 
 void Workout::end() {
-  elapsed_workout_ms = millis() - start_workout_ms;
+  total_ms = millis() - start_workout_ms;
 }
 
 void Workout::reset() {
@@ -115,6 +115,7 @@ unsigned long& Workout::get_total_ms() {
 }
 
 unsigned long& Workout::get_elapsed_workout_time() {
+  elapsed_workout_ms = millis() - start_workout_ms;
   return elapsed_workout_ms;
 }
 
