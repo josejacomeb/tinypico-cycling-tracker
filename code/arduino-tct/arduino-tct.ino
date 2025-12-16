@@ -3,8 +3,8 @@
 * Written by: josejacomeb / 2025
 */
 #include <I2Cdev.h>
-#include <SPI.h>
 #include <MPU6050_6Axis_MotionApps20.h>
+#include <SPI.h>
 #include <TinyGPS++.h>
 #include <TinyPICO.h>
 
@@ -12,30 +12,26 @@
 #include "writter.hpp"
 #include "workout.hpp"
 
+// Debug mode
+#define DEBUG 0
+
 // TinyPICO PINS
 // Digital UART Pins for ESP32-PICO-D4
 #define TX 25
 #define RX 26
+// Push Button Pin
 #define INPUT_PIN 33
-#define PRINT 0
 // SD Pins control
-const unsigned int CS = 5;
+#define CS 5
 // MPU Interrupt Pin
-int const INTERRUPT_PIN = 2;  // Define the interruption #0 pin
+#define INTERRUPT_PIN 2
+// APA102 Dotstar
+#define DOTSTAR_PWR 13
+#define DOTSTAR_DATA 2
+#define DOTSTAR_CLK 12
 
 // Initialise the TinyPICO library
 TinyPICO tp = TinyPICO();
-
-enum class State {
-  LOADING,
-  WAITING,
-  START_WORKOUT,
-  END_WORKOUT,
-  SUMMARY
-};
-enum State m_state;
-
-bool blinkState;
 
 /*---MPU6050 Control/Status Variables---*/
 bool DMPReady = false;   // Set true if DMP init was successful
@@ -50,36 +46,47 @@ VectorFloat gravity;  // [x, y, z]            Gravity vector
 float ypr[3];         // [yaw, pitch, roll]   Yaw/Pitch/Roll container and gravity vector
 MPU6050 mpu;
 
-// The TinyGPS++ object
-TinyGPSPlus gps;
-
 /*------Interrupt detection routine------*/
 volatile bool MPUInterrupt = false;  // Indicates whether MPU6050 interrupt pin has gone high
 void DMPDataReady() {
   MPUInterrupt = true;
 }
-double lat, lng, speed_m_s, altitude;
-float ypr_ang[3] = { 0.0f, 0.0f, 0.0f };
+
+// The GPS Variables
+TinyGPSPlus gps;
+double speed_m_s, altitude;
 unsigned long start;
 const unsigned int period = 16;
 unsigned int display_results_counter = 1;
 const unsigned int max_display_results_counter = 60;
-String pace;
+
+// Extra objects
 OLEDGPS oled_display;
 Workout workout;
 
+// States
+enum class State {
+  LOADING,
+  WAITING,
+  START_WORKOUT,
+  END_WORKOUT,
+  SUMMARY
+};
+enum State m_state;
+
+const unsigned int led_time = 5000;
+
 void setup() {
-  tp.DotStar_SetPixelColor(255, 0, 255);
+  tp.DotStar_Clear();
+  tp.DotStar_SetPixelColor(242, 57, 29);
+  tp.DotStar_Show();
   pinMode(INPUT_PIN, INPUT);
   // Used for debug output only
   Serial.begin(115200);
   oled_display.init_screen();
-#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+  // Using I2CDEV_ARDUINO_WIRE
   Wire.begin();
   Wire.setClock(400000);  // 400kHz I2C clock. Comment on this line if having compilation difficulties
-#elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
-  Fastwire::setup(400, true);
-#endif
   /*Initialize device*/
   Serial.println(F("Initializing I2C devices..."));
   mpu.initialize();
@@ -91,7 +98,7 @@ void setup() {
       ;
   }
   oled_display.init_sd();
-  delay(1000);
+  delay(led_time);
   /*Verify connection*/
   Serial.println(F("Testing MPU6050 connection..."));
   if (mpu.testConnection() == false) {
@@ -140,8 +147,10 @@ void setup() {
     Serial.println(F(")"));
   }
   oled_display.init_imu();
-  delay(1000);
-  tp.DotStar_SetPixelColor(0, 255, 0);
+  tp.DotStar_Clear();
+  tp.DotStar_SetPixelColor(237, 230, 21);
+  tp.DotStar_Show();
+  delay(led_time);
   Serial2.begin(9600, SERIAL_8N1, RX, TX);
   Serial.print("Starting Serial 2...");
   while (!gps.location.isValid()) {
@@ -150,9 +159,11 @@ void setup() {
     }
   }
   oled_display.init_gps();
-  tp.DotStar_SetPixelColor(255, 0, 0);
-  delay(1000);
-  tp.DotStar_SetBrightness(0);
+  tp.DotStar_Clear();
+  tp.DotStar_SetPixelColor(136, 237, 21);
+  tp.DotStar_Show();
+  delay(led_time);
+  tp.DotStar_SetPower(false);
   m_state = State::WAITING;
   start = millis();
 }
@@ -179,21 +190,16 @@ void loop() {
     mpu.dmpGetQuaternion(&q, FIFOBuffer);
     mpu.dmpGetGravity(&gravity, &q);
     mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-    ypr_ang[0] = ypr[0] * 180 / M_PI;
-    ypr_ang[1] = ypr[1] * 180 / M_PI;
-    ypr_ang[2] = ypr[2] * 180 / M_PI;
   }
   while (Serial2.available() > 0) {
     gps.encode(Serial2.read());
     if (gps.location.isUpdated() && gps.location.isValid()) {
-      lat = gps.location.lat();
-      lng = gps.location.lng();
       altitude = gps.altitude.isValid() ? gps.altitude.meters() : 0.0;
       speed_m_s = gps.speed.isValid() ? gps.speed.mps() : 0.0;
       unsigned long ts = millis();
       // distance accumulation
       if (workout.is_last_pos_valid()) {
-       double d = workout.haversine(workout.get_last_location(), gps.location);
+        double d = workout.haversine(workout.get_last_location(), gps.location);
         // ignore spurious large jumps
         if (d < 50.0) {
           if (m_state == State::START_WORKOUT)
@@ -202,21 +208,20 @@ void loop() {
       }
       workout.pushWP(gps.location, altitude);
       double speed_kmh = speed_m_s * 3.6;
-      pace = workout.paceFromSpeed(speed_m_s);
     }
   }
   if (millis() - start > period) {
-#if PRINT
-    Serial.print("YPR: ");
-    Serial.print(ypr_ang[0]);
+#if DEBUG
+    Serial.print("YPR Rad: ");
+    Serial.print(ypr[0]);
     Serial.print(", ");
-    Serial.print(ypr_ang[1]);
+    Serial.print(ypr[1]);
     Serial.print(", ");
-    Serial.print(ypr_ang[2]);
+    Serial.print(ypr[2]);
     Serial.print(" Lat: ");
-    Serial.print(lat, 6);
+    Serial.print(gps.location.lat(), 6);
     Serial.print(" Lng: ");
-    Serial.print(lng, 6);
+    Serial.print(gps.location.lng(), 6);
     Serial.print(" speed: ");
     Serial.print(speed);
     Serial.print(" altitude: ");
@@ -230,7 +235,7 @@ void loop() {
         break;
       case State::START_WORKOUT:
         oled_display.update_values(workout.get_total_distance(), workout.get_slope(ypr[1]), workout.paceFromSpeed(speed_m_s), altitude, workout.get_elapsed_workout_time());
-        write_gpx(lat, lng, altitude, gps.date, gps.time);
+        write_gpx(gps.location, altitude, gps.date, gps.time);
         break;
       case State::END_WORKOUT:
         write_file(trk_end_tag);
