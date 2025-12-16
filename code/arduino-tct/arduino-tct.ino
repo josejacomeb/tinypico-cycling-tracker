@@ -60,7 +60,7 @@ void DMPDataReady() {
 }
 double lat, lng, speed_m_s, altitude;
 float ypr_ang[3] = { 0.0f, 0.0f, 0.0f };
-unsigned long start, elapsed_workout_ms;
+unsigned long start;
 const unsigned int period = 16;
 unsigned int display_results_counter = 1;
 const unsigned int max_display_results_counter = 60;
@@ -192,17 +192,15 @@ void loop() {
       speed_m_s = gps.speed.isValid() ? gps.speed.mps() : 0.0;
       unsigned long ts = millis();
       // distance accumulation
-      if (workout.lastPos.valid) {
-       double d = workout.haversine(workout.lastPos.lat, workout.lastPos.lon, lat, lng);
+      if (workout.is_last_pos_valid()) {
+       double d = workout.haversine(workout.get_last_location(), gps.location);
         // ignore spurious large jumps
         if (d < 50.0) {
           if (m_state == State::START_WORKOUT)
-            workout.totalDist_m += d;
+            workout.add_distance(d);
         }
       }
-      workout.lastPos = { lat, lng, altitude, true };
-      workout.pushWP(lat, lng, altitude);
-
+      workout.pushWP(gps.location, altitude);
       double speed_kmh = speed_m_s * 3.6;
       pace = workout.paceFromSpeed(speed_m_s);
     }
@@ -231,8 +229,7 @@ void loop() {
         oled_display.draw_wait_screen(gps.time);
         break;
       case State::START_WORKOUT:
-        elapsed_workout_ms = millis() - workout.start_workout_ms;
-        oled_display.update_values(workout.totalDist_m, workout.get_slope(ypr[1]), workout.paceFromSpeed(speed_m_s), altitude, elapsed_workout_ms);
+        oled_display.update_values(workout.get_total_distance(), workout.get_slope(ypr[1]), workout.paceFromSpeed(speed_m_s), altitude, workout.get_elapsed_workout_time());
         write_gpx(lat, lng, altitude, gps.date, gps.time);
         break;
       case State::END_WORKOUT:
@@ -243,7 +240,7 @@ void loop() {
         break;
       case State::SUMMARY:
         display_results_counter++;
-        oled_display.display_total_results(workout.totalDist_m, workout.total_ms);
+        oled_display.display_total_results(workout.get_total_distance(), workout.get_total_ms());
         if (display_results_counter > max_display_results_counter) {
           display_results_counter = 1;
           m_state = State::WAITING;

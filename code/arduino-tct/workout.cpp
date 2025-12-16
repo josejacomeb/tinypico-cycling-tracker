@@ -2,6 +2,7 @@
 
 void Workout::start() {
   start_workout_ms = millis();
+  totalDist_m = 0;
 }
 
 void Workout::end() {
@@ -13,23 +14,23 @@ void Workout::reset() {
   elapsed_workout_ms = 0;
 }
 
-double Workout::haversine(double lat1, double lon1, double lat2, double lon2) {
+double Workout::haversine(TinyGPSLocation& Pos1, TinyGPSLocation& Pos2) {
   const double R = 6371000.0;
-  double dlat = (lat2 - lat1) * DEG_TO_RAD;
-  double dlon = (lon2 - lon1) * DEG_TO_RAD;
-  double a = sin(dlat / 2) * sin(dlat / 2) + cos(lat1 * DEG_TO_RAD) * cos(lat2 * DEG_TO_RAD) * sin(dlon / 2) * sin(dlon / 2);
+  double dlat = (Pos2.lat() - Pos1.lat()) * DEG_TO_RAD;
+  double dlon = (Pos2.lng() - Pos1.lng()) * DEG_TO_RAD;
+  double a = sin(dlat / 2) * sin(dlat / 2) + cos(Pos1.lat() * DEG_TO_RAD) * cos(Pos2.lat() * DEG_TO_RAD) * sin(dlon / 2) * sin(dlon / 2);
   return R * 2 * atan2(sqrt(a), sqrt(1 - a));
 }
 
-void Workout::pushWP(double lat, double lon, double alt) {
-  WP wp = { lat, lon, alt, 0.0, true };
+void Workout::pushWP(TinyGPSLocation& Pos1, double alt) {
+  WP wp = { Pos1, alt, 0.0, true };
   if (!win[win_end].valid) {
     win[win_end] = wp;
     win_end = (win_end + 1) % MAXW;
     return;
   }
   int prev = (win_end - 1 + MAXW) % MAXW;
-  double d = haversine(win[prev].lat, win[prev].lon, lat, lon);
+  double d = haversine(win[prev].Pos, Pos1);
   wp.accumDist = win[prev].accumDist + d;
   win[win_end] = wp;
   win_end = (win_end + 1) % MAXW;
@@ -44,6 +45,8 @@ void Workout::pushWP(double lat, double lon, double alt) {
       win_start = (win_start + 1) % MAXW;
     } else break;
   }
+  elapsed_workout_ms = millis() - start_workout_ms;
+  lastPos = { Pos1, alt, true };
 }
 
 bool Workout::gpsGrade(double& grade) {
@@ -83,4 +86,26 @@ double& Workout::get_slope(float& pitch) {
     slope = ALPHA_IMU * imuSlopePercent + (1.0 - ALPHA_IMU) * ggrade;
   }
   return slope;
+}
+void Workout::add_distance(double distance) {
+  totalDist_m += distance;
+}
+
+double& Workout::get_total_distance() {
+  return totalDist_m;
+}
+
+unsigned long& Workout::get_total_ms() {
+  return total_ms;
+}
+unsigned long& Workout::get_elapsed_workout_time() {
+  return elapsed_workout_ms;
+}
+
+TinyGPSLocation& Workout::get_last_location() {
+  return lastPos.Pos;
+}
+
+bool Workout::is_last_pos_valid() {
+  return lastPos.valid;
 }
