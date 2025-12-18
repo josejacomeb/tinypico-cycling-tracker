@@ -13,3 +13,6 @@
 [submodule "footprints/TinyPico"]
 	path = Schematics/kicad-libraries/TinyPico
 	url = https://github.com/josejacomeb/KiCad-TinyPico.git
+[submodule "code/arduino-tct/ukf"]
+	path = code/arduino-tct/ukf
+	url = https://github.com/pronenewbits/Embedded_UKF_Library.git
