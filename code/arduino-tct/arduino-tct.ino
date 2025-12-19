@@ -9,6 +9,9 @@
 #include <TinyPICO.h>
 
 #include "oled.hpp"
+#include "konfig.h"
+#include "matrix.h"
+#include "ukf.h"
 #include "writter.hpp"
 #include "workout.hpp"
 
@@ -60,6 +63,52 @@ unsigned long start;
 const unsigned int period = 16;
 unsigned int display_results_counter = 1;
 const unsigned int max_display_results_counter = 60;
+
+
+/* ================================================== The AHRS/IMU variables ================================================== */
+/* Gravity vector constant (align with global Z-axis) */
+#define IMU_ACC_Z0          (1)
+/* Magnetic vector constant (align with local magnetic vector) */
+float_prec IMU_MAG_B0_data[3] = {cos(0), sin(0), 0.000000};
+Matrix IMU_MAG_B0(3, 1, IMU_MAG_B0_data);
+/* The hard-magnet bias */
+float_prec HARD_IRON_BIAS_data[3] = {8.832973, 7.243323, 23.95714};
+Matrix HARD_IRON_BIAS(3, 1, HARD_IRON_BIAS_data);
+
+/* UKF initialization constant -------------------------------------------------------------------------------------- */
+#define P_INIT      (10.)
+#define Rv_INIT     (1e-6)
+#define Rn_INIT_ACC (0.0015)
+#define Rn_INIT_MAG (0.0015)
+/* P(k=0) variable -------------------------------------------------------------------------------------------------- */
+float_prec UKF_PINIT_data[SS_X_LEN*SS_X_LEN] = {P_INIT, 0,      0,      0,
+                                                0,      P_INIT, 0,      0,
+                                                0,      0,      P_INIT, 0,
+                                                0,      0,      0,      P_INIT};
+Matrix UKF_PINIT(SS_X_LEN, SS_X_LEN, UKF_PINIT_data);
+/* Q constant ------------------------------------------------------------------------------------------------------- */
+float_prec UKF_RVINIT_data[SS_X_LEN*SS_X_LEN] = {Rv_INIT, 0,      0,      0,
+                                                 0,      Rv_INIT, 0,      0,
+                                                 0,      0,      Rv_INIT, 0,
+                                                 0,      0,      0,      Rv_INIT};
+Matrix UKF_RvINIT(SS_X_LEN, SS_X_LEN, UKF_RVINIT_data);
+/* R constant ------------------------------------------------------------------------------------------------------- */
+float_prec UKF_RNINIT_data[SS_Z_LEN*SS_Z_LEN] = {Rn_INIT_ACC, 0,          0,          0,          0,          0,
+                                                 0,          Rn_INIT_ACC, 0,          0,          0,          0,
+                                                 0,          0,          Rn_INIT_ACC, 0,          0,          0,
+                                                 0,          0,          0,          Rn_INIT_MAG, 0,          0,
+                                                 0,          0,          0,          0,          Rn_INIT_MAG, 0,
+                                                 0,          0,          0,          0,          0,          Rn_INIT_MAG};
+Matrix UKF_RnINIT(SS_Z_LEN, SS_Z_LEN, UKF_RNINIT_data);
+/* Nonlinear & linearization function ------------------------------------------------------------------------------- */
+bool Main_bUpdateNonlinearX(Matrix& X_Next, const Matrix& X, const Matrix& U);
+bool Main_bUpdateNonlinearY(Matrix& Y, const Matrix& X, const Matrix& U);
+/* UKF variables ---------------------------------------------------------------------------------------------------- */
+Matrix quaternionData(SS_X_LEN, 1);
+Matrix Y(SS_Z_LEN, 1);
+Matrix U(SS_U_LEN, 1);
+/* UKF system declaration ------------------------------------------------------------------------------------------- */
+UKF UKF_IMU(quaternionData, UKF_PINIT, UKF_RvINIT, UKF_RnINIT, Main_bUpdateNonlinearX, Main_bUpdateNonlinearY);
 
 // ---- Application Objects ----
 OLEDGPS oled_display;
@@ -256,4 +305,107 @@ void loop() {
     }
     start = millis();
   }
+}
+
+bool Main_bUpdateNonlinearX(Matrix& X_Next, const Matrix& X, const Matrix& U)
+{
+    /* Insert the nonlinear update transformation here
+     *          x(k+1) = f[x(k), u(k)]
+     *
+     * The quaternion update function:
+     *  q0_dot = 1/2. * (  0   - p*q1 - q*q2 - r*q3)
+     *  q1_dot = 1/2. * ( p*q0 +   0  + r*q2 - q*q3)
+     *  q2_dot = 1/2. * ( q*q0 - r*q1 +  0   + p*q3)
+     *  q3_dot = 1/2. * ( r*q0 + q*q1 - p*q2 +  0  )
+     * 
+     * Euler method for integration:
+     *  q0 = q0 + q0_dot * dT;
+     *  q1 = q1 + q1_dot * dT;
+     *  q2 = q2 + q2_dot * dT;
+     *  q3 = q3 + q3_dot * dT;
+     */
+    float_prec q0, q1, q2, q3;
+    float_prec p, q, r;
+    
+    q0 = X[0][0];
+    q1 = X[1][0];
+    q2 = X[2][0];
+    q3 = X[3][0];
+    
+    p = U[0][0];
+    q = U[1][0];
+    r = U[2][0];
+    
+    X_Next[0][0] = (0.5 * (+0.00 -p*q1 -q*q2 -r*q3))*SS_DT + q0;
+    X_Next[1][0] = (0.5 * (+p*q0 +0.00 +r*q2 -q*q3))*SS_DT + q1;
+    X_Next[2][0] = (0.5 * (+q*q0 -r*q1 +0.00 +p*q3))*SS_DT + q2;
+    X_Next[3][0] = (0.5 * (+r*q0 +q*q1 -p*q2 +0.00))*SS_DT + q3;
+    
+    
+    /* ======= Additional ad-hoc quaternion normalization to make sure the quaternion is a unit vector (i.e. ||q|| = 1) ======= */
+    if (!X_Next.bNormVector()) {
+        /* System error, return false so we can reset the UKF */
+        return false;
+    }
+    
+    return true;
+}
+
+bool Main_bUpdateNonlinearY(Matrix& Y, const Matrix& X, const Matrix& U)
+{
+    /* Insert the nonlinear measurement transformation here
+     *          y(k)   = h[x(k), u(k)]
+     *
+     * The measurement output is the gravitational and magnetic projection to the body:
+     *     DCM     = [(+(q0**2)+(q1**2)-(q2**2)-(q3**2)),                    2*(q1*q2+q0*q3),                    2*(q1*q3-q0*q2)]
+     *               [                   2*(q1*q2-q0*q3), (+(q0**2)-(q1**2)+(q2**2)-(q3**2)),                    2*(q2*q3+q0*q1)]
+     *               [                   2*(q1*q3+q0*q2),                    2*(q2*q3-q0*q1), (+(q0**2)-(q1**2)-(q2**2)+(q3**2))]
+     * 
+     *  G_proj_sens = DCM * [0 0 1]             --> Gravitational projection to the accelerometer sensor
+     *  M_proj_sens = DCM * [Mx My Mz]          --> (Earth) magnetic projection to the magnetometer sensor
+     */
+    float_prec q0, q1, q2, q3;
+    float_prec q0_2, q1_2, q2_2, q3_2;
+
+    q0 = X[0][0];
+    q1 = X[1][0];
+    q2 = X[2][0];
+    q3 = X[3][0];
+
+    q0_2 = q0 * q0;
+    q1_2 = q1 * q1;
+    q2_2 = q2 * q2;
+    q3_2 = q3 * q3;
+    
+    Y[0][0] = (2*q1*q3 -2*q0*q2) * IMU_ACC_Z0;
+
+    Y[1][0] = (2*q2*q3 +2*q0*q1) * IMU_ACC_Z0;
+
+    Y[2][0] = (+(q0_2) -(q1_2) -(q2_2) +(q3_2)) * IMU_ACC_Z0;
+    
+    Y[3][0] = (+(q0_2)+(q1_2)-(q2_2)-(q3_2)) * IMU_MAG_B0[0][0]
+             +(2*(q1*q2+q0*q3)) * IMU_MAG_B0[1][0]
+             +(2*(q1*q3-q0*q2)) * IMU_MAG_B0[2][0];
+
+    Y[4][0] = (2*(q1*q2-q0*q3)) * IMU_MAG_B0[0][0]
+             +(+(q0_2)-(q1_2)+(q2_2)-(q3_2)) * IMU_MAG_B0[1][0]
+             +(2*(q2*q3+q0*q1)) * IMU_MAG_B0[2][0];
+
+    Y[5][0] = (2*(q1*q3+q0*q2)) * IMU_MAG_B0[0][0]
+             +(2*(q2*q3-q0*q1)) * IMU_MAG_B0[1][0]
+             +(+(q0_2)-(q1_2)-(q2_2)+(q3_2)) * IMU_MAG_B0[2][0];
+    
+    return true;
+}
+
+void SPEW_THE_ERROR(char const * str)
+{
+    #if (SYSTEM_IMPLEMENTATION == SYSTEM_IMPLEMENTATION_PC)
+        cout << (str) << endl;
+    #elif (SYSTEM_IMPLEMENTATION == SYSTEM_IMPLEMENTATION_EMBEDDED_ARDUINO)
+        Serial.println(str);
+    #else
+        /* Silent function */
+    #endif
+    while(1);
 }
