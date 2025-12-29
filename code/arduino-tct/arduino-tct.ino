@@ -3,15 +3,13 @@
 * Written by: josejacomeb / 2025
 */
 #include <I2Cdev.h>
-#include <MPU6050_6Axis_MotionApps20.h>
+#include <MPU6050_6Axis_MotionApps612.h>  // For get no gravity results
 #include <SPI.h>
 #include <TinyGPS++.h>
 #include <TinyPICO.h>
 
 #include "oled.hpp"
-#include "konfig.h"
-#include "matrix.h"
-#include "ukf.h"
+#include "ukf_gps_imu.hpp"
 #include "writter.hpp"
 #include "workout.hpp"
 
@@ -37,16 +35,20 @@
 TinyPICO tp = TinyPICO();
 
 // ---- MPU6050 Control/Status Variables ----
-bool DMPReady = false;               // Set true if DMP init was successful
-uint8_t MPUIntStatus;                // Holds actual interrupt status byte from MPU
-uint8_t devStatus;                   // Return status after each device operation (0 = success, !0 = error)
-uint16_t packetSize;                 // Expected DMP packet size (default is 42 bytes)
-uint8_t FIFOBuffer[64];              // FIFO storage buffer
+bool DMPReady = false;   // Set true if DMP init was successful
+uint8_t MPUIntStatus;    // Holds actual interrupt status byte from MPU
+uint8_t devStatus;       // Return status after each device operation (0 = success, !0 = error)
+uint16_t packetSize;     // Expected DMP packet size (default is 42 bytes)
+uint8_t FIFOBuffer[64];  // FIFO storage buffer
 
 // ---- Orientation/Motion Variables ----
-Quaternion q;                        // [w, x, y, z] Quaternion container
-VectorFloat gravity;                 // [x, y, z] Gravity vector
-float ypr[3];                        // [yaw, pitch, roll] Yaw/Pitch/Roll container and gravity vector
+Quaternion q;         // [w, x, y, z] Quaternion container
+VectorInt16 aa;       // [x, y, z]            Accel sensor measurements
+VectorInt16 gy;       // [x, y, z]            Gyro sensor measurements
+VectorInt16 aaReal;   // [x, y, z]            Gravity-free accel sensor measurements
+VectorInt16 aaWorld;  // [x, y, z]            World-frame accel sensor measurements
+VectorFloat gravity;  // [x, y, z]            Gravity vector
+float ypr[3];         // [yaw, pitch, roll] Yaw/Pitch/Roll container and gravity vector
 MPU6050 mpu;
 
 // ---- Interrupt detection routine ----
@@ -65,50 +67,6 @@ unsigned int display_results_counter = 1;
 const unsigned int max_display_results_counter = 60;
 
 
-/* ================================================== The AHRS/IMU variables ================================================== */
-/* Gravity vector constant (align with global Z-axis) */
-#define IMU_ACC_Z0          (1)
-/* Magnetic vector constant (align with local magnetic vector) */
-float_prec IMU_MAG_B0_data[3] = {cos(0), sin(0), 0.000000};
-Matrix IMU_MAG_B0(3, 1, IMU_MAG_B0_data);
-/* The hard-magnet bias */
-float_prec HARD_IRON_BIAS_data[3] = {8.832973, 7.243323, 23.95714};
-Matrix HARD_IRON_BIAS(3, 1, HARD_IRON_BIAS_data);
-
-/* UKF initialization constant -------------------------------------------------------------------------------------- */
-#define P_INIT      (10.)
-#define Rv_INIT     (1e-6)
-#define Rn_INIT_ACC (0.0015)
-#define Rn_INIT_MAG (0.0015)
-/* P(k=0) variable -------------------------------------------------------------------------------------------------- */
-float_prec UKF_PINIT_data[SS_X_LEN*SS_X_LEN] = {P_INIT, 0,      0,      0,
-                                                0,      P_INIT, 0,      0,
-                                                0,      0,      P_INIT, 0,
-                                                0,      0,      0,      P_INIT};
-Matrix UKF_PINIT(SS_X_LEN, SS_X_LEN, UKF_PINIT_data);
-/* Q constant ------------------------------------------------------------------------------------------------------- */
-float_prec UKF_RVINIT_data[SS_X_LEN*SS_X_LEN] = {Rv_INIT, 0,      0,      0,
-                                                 0,      Rv_INIT, 0,      0,
-                                                 0,      0,      Rv_INIT, 0,
-                                                 0,      0,      0,      Rv_INIT};
-Matrix UKF_RvINIT(SS_X_LEN, SS_X_LEN, UKF_RVINIT_data);
-/* R constant ------------------------------------------------------------------------------------------------------- */
-float_prec UKF_RNINIT_data[SS_Z_LEN*SS_Z_LEN] = {Rn_INIT_ACC, 0,          0,          0,          0,          0,
-                                                 0,          Rn_INIT_ACC, 0,          0,          0,          0,
-                                                 0,          0,          Rn_INIT_ACC, 0,          0,          0,
-                                                 0,          0,          0,          Rn_INIT_MAG, 0,          0,
-                                                 0,          0,          0,          0,          Rn_INIT_MAG, 0,
-                                                 0,          0,          0,          0,          0,          Rn_INIT_MAG};
-Matrix UKF_RnINIT(SS_Z_LEN, SS_Z_LEN, UKF_RNINIT_data);
-/* Nonlinear & linearization function ------------------------------------------------------------------------------- */
-bool Main_bUpdateNonlinearX(Matrix& X_Next, const Matrix& X, const Matrix& U);
-bool Main_bUpdateNonlinearY(Matrix& Y, const Matrix& X, const Matrix& U);
-/* UKF variables ---------------------------------------------------------------------------------------------------- */
-Matrix quaternionData(SS_X_LEN, 1);
-Matrix Y(SS_Z_LEN, 1);
-Matrix U(SS_U_LEN, 1);
-/* UKF system declaration ------------------------------------------------------------------------------------------- */
-UKF UKF_IMU(quaternionData, UKF_PINIT, UKF_RvINIT, UKF_RnINIT, Main_bUpdateNonlinearX, Main_bUpdateNonlinearY);
 
 // ---- Application Objects ----
 OLEDGPS oled_display;
@@ -124,8 +82,47 @@ enum class State {
 };
 
 State m_state;
+double vNorth, vEast;
+UKFGPSIMU sf_lat, sf_lng;
 
 const unsigned int led_time = 5000;
+
+struct LatLonDeg {
+  double lat;  // Latitude  in degrees, range [-90, +90]
+  double lon;  // Longitude in degrees, range [-180, +180]
+
+  LatLonDeg()
+    : lat(0.0), lon(0.0) {}
+
+  LatLonDeg(double latitude_deg, double longitude_deg)
+    : lat(latitude_deg), lon(longitude_deg) {}
+};
+
+struct LatLonDeg getPointAhead(
+  const LatLonDeg& start,
+  double distance_m,
+  double bearing_deg) {
+
+  double lat1 = start.lat * M_PI / 180.0;
+  double lon1 = start.lon * M_PI / 180.0;
+  double bearing = bearing_deg * M_PI / 180.0;
+  double delta = distance_m / EARTH_RADIUS;
+
+  double lat2 = asin(
+    sin(lat1) * cos(delta) + cos(lat1) * sin(delta) * cos(bearing));
+
+  double y = sin(bearing) * sin(delta) * cos(lat1);
+  double x = cos(delta) - sin(lat1) * sin(lat2);
+
+  double lon2 = lon1 + atan2(y, x);
+
+  LatLonDeg result;
+  result.lat = lat2 * 180.0 / M_PI;
+  result.lon = lon2 * 180.0 / M_PI;
+
+  return result;
+}
+LatLonDeg ZeroPoint;
 
 void setup() {
   tp.DotStar_Clear();
@@ -203,7 +200,7 @@ void setup() {
   tp.DotStar_Show();
   delay(led_time);
   Serial2.begin(9600, SERIAL_8N1, RX, TX);
-  Serial.print("Starting Serial 2...");
+  Serial.println("Starting Serial 2...");
   while (!gps.location.isValid()) {
     while (Serial2.available() > 0) {
       gps.encode(Serial2.read());
@@ -216,6 +213,8 @@ void setup() {
   delay(led_time);
   tp.DotStar_SetPower(false);
   m_state = State::WAITING;
+  sf_lat.init(GPSAxis::LATITUDE);
+  sf_lng.init(GPSAxis::LONGITUDE);
   start = millis();
 }
 
@@ -239,14 +238,22 @@ void loop() {
   if (mpu.dmpGetCurrentFIFOPacket(FIFOBuffer)) {  // Get the Latest packet
     /* Display Euler angles in degrees */
     mpu.dmpGetQuaternion(&q, FIFOBuffer);
+    mpu.dmpGetAccel(&aa, FIFOBuffer);
     mpu.dmpGetGravity(&gravity, &q);
+    mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
+    mpu.dmpGetLinearAccelInWorld(&aaWorld, &aaReal, &q);
     mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
+    // As located in the PCB
+    sf_lat.add_imu_acceleration(aaWorld.y);
+    sf_lng.add_imu_acceleration(aaWorld.x);
   }
   while (Serial2.available() > 0) {
     gps.encode(Serial2.read());
     if (gps.location.isUpdated() && gps.location.isValid()) {
       altitude = gps.altitude.isValid() ? gps.altitude.meters() : 0.0;
       speed_m_s = gps.speed.isValid() ? gps.speed.mps() : 0.0;
+      vNorth = speed_m_s * cos(gps.course.deg() * M_PI / 180);
+      vEast = speed_m_s * sin(gps.course.deg() * M_PI / 180);
       unsigned long ts = millis();
       // distance accumulation
       if (workout.is_last_pos_valid()) {
@@ -259,8 +266,13 @@ void loop() {
       }
       workout.pushWP(gps.location, altitude);
       double speed_kmh = speed_m_s * 3.6;
+      sf_lat.add_gps_position_velocity(gps.location, vNorth);
+      sf_lng.add_gps_position_velocity(gps.location, vEast);
     }
   }
+  LatLonDeg PointEast = getPointAhead(ZeroPoint, sf_lat.get_predicted_position_meters(), 90);
+  LatLonDeg PointNorthEast = getPointAhead(PointEast, sf_lng.get_predicted_position_meters(), 180);
+
   if (millis() - start > period) {
 #if DEBUG
     Serial.print("YPR Rad: ");
@@ -307,105 +319,14 @@ void loop() {
   }
 }
 
-bool Main_bUpdateNonlinearX(Matrix& X_Next, const Matrix& X, const Matrix& U)
-{
-    /* Insert the nonlinear update transformation here
-     *          x(k+1) = f[x(k), u(k)]
-     *
-     * The quaternion update function:
-     *  q0_dot = 1/2. * (  0   - p*q1 - q*q2 - r*q3)
-     *  q1_dot = 1/2. * ( p*q0 +   0  + r*q2 - q*q3)
-     *  q2_dot = 1/2. * ( q*q0 - r*q1 +  0   + p*q3)
-     *  q3_dot = 1/2. * ( r*q0 + q*q1 - p*q2 +  0  )
-     * 
-     * Euler method for integration:
-     *  q0 = q0 + q0_dot * dT;
-     *  q1 = q1 + q1_dot * dT;
-     *  q2 = q2 + q2_dot * dT;
-     *  q3 = q3 + q3_dot * dT;
-     */
-    float_prec q0, q1, q2, q3;
-    float_prec p, q, r;
-    
-    q0 = X[0][0];
-    q1 = X[1][0];
-    q2 = X[2][0];
-    q3 = X[3][0];
-    
-    p = U[0][0];
-    q = U[1][0];
-    r = U[2][0];
-    
-    X_Next[0][0] = (0.5 * (+0.00 -p*q1 -q*q2 -r*q3))*SS_DT + q0;
-    X_Next[1][0] = (0.5 * (+p*q0 +0.00 +r*q2 -q*q3))*SS_DT + q1;
-    X_Next[2][0] = (0.5 * (+q*q0 -r*q1 +0.00 +p*q3))*SS_DT + q2;
-    X_Next[3][0] = (0.5 * (+r*q0 +q*q1 -p*q2 +0.00))*SS_DT + q3;
-    
-    
-    /* ======= Additional ad-hoc quaternion normalization to make sure the quaternion is a unit vector (i.e. ||q|| = 1) ======= */
-    if (!X_Next.bNormVector()) {
-        /* System error, return false so we can reset the UKF */
-        return false;
-    }
-    
-    return true;
-}
-
-bool Main_bUpdateNonlinearY(Matrix& Y, const Matrix& X, const Matrix& U)
-{
-    /* Insert the nonlinear measurement transformation here
-     *          y(k)   = h[x(k), u(k)]
-     *
-     * The measurement output is the gravitational and magnetic projection to the body:
-     *     DCM     = [(+(q0**2)+(q1**2)-(q2**2)-(q3**2)),                    2*(q1*q2+q0*q3),                    2*(q1*q3-q0*q2)]
-     *               [                   2*(q1*q2-q0*q3), (+(q0**2)-(q1**2)+(q2**2)-(q3**2)),                    2*(q2*q3+q0*q1)]
-     *               [                   2*(q1*q3+q0*q2),                    2*(q2*q3-q0*q1), (+(q0**2)-(q1**2)-(q2**2)+(q3**2))]
-     * 
-     *  G_proj_sens = DCM * [0 0 1]             --> Gravitational projection to the accelerometer sensor
-     *  M_proj_sens = DCM * [Mx My Mz]          --> (Earth) magnetic projection to the magnetometer sensor
-     */
-    float_prec q0, q1, q2, q3;
-    float_prec q0_2, q1_2, q2_2, q3_2;
-
-    q0 = X[0][0];
-    q1 = X[1][0];
-    q2 = X[2][0];
-    q3 = X[3][0];
-
-    q0_2 = q0 * q0;
-    q1_2 = q1 * q1;
-    q2_2 = q2 * q2;
-    q3_2 = q3 * q3;
-    
-    Y[0][0] = (2*q1*q3 -2*q0*q2) * IMU_ACC_Z0;
-
-    Y[1][0] = (2*q2*q3 +2*q0*q1) * IMU_ACC_Z0;
-
-    Y[2][0] = (+(q0_2) -(q1_2) -(q2_2) +(q3_2)) * IMU_ACC_Z0;
-    
-    Y[3][0] = (+(q0_2)+(q1_2)-(q2_2)-(q3_2)) * IMU_MAG_B0[0][0]
-             +(2*(q1*q2+q0*q3)) * IMU_MAG_B0[1][0]
-             +(2*(q1*q3-q0*q2)) * IMU_MAG_B0[2][0];
-
-    Y[4][0] = (2*(q1*q2-q0*q3)) * IMU_MAG_B0[0][0]
-             +(+(q0_2)-(q1_2)+(q2_2)-(q3_2)) * IMU_MAG_B0[1][0]
-             +(2*(q2*q3+q0*q1)) * IMU_MAG_B0[2][0];
-
-    Y[5][0] = (2*(q1*q3+q0*q2)) * IMU_MAG_B0[0][0]
-             +(2*(q2*q3-q0*q1)) * IMU_MAG_B0[1][0]
-             +(+(q0_2)-(q1_2)-(q2_2)+(q3_2)) * IMU_MAG_B0[2][0];
-    
-    return true;
-}
-
-void SPEW_THE_ERROR(char const * str)
-{
-    #if (SYSTEM_IMPLEMENTATION == SYSTEM_IMPLEMENTATION_PC)
-        cout << (str) << endl;
-    #elif (SYSTEM_IMPLEMENTATION == SYSTEM_IMPLEMENTATION_EMBEDDED_ARDUINO)
-        Serial.println(str);
-    #else
-        /* Silent function */
-    #endif
-    while(1);
+void SPEW_THE_ERROR(char const* str) {
+#if (SYSTEM_IMPLEMENTATION == SYSTEM_IMPLEMENTATION_PC)
+  cout << (str) << endl;
+#elif (SYSTEM_IMPLEMENTATION == SYSTEM_IMPLEMENTATION_EMBEDDED_ARDUINO)
+  Serial.println(str);
+#else
+  /* Silent function */
+#endif
+  while (1)
+    ;
 }

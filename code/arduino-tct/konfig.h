@@ -4,10 +4,10 @@
 #include <math.h>
 
 /* State Space dimension */
-#define SS_X_LEN (4)
-#define SS_Z_LEN (6)
-#define SS_U_LEN (3)
-#define SS_DT_MILIS (20)                      /* 20 ms */
+#define SS_X_LEN 2
+#define SS_Z_LEN 2
+#define SS_U_LEN 3
+#define SS_DT_MILIS 20                        /* 20 ms */
 #define SS_DT float_prec(SS_DT_MILIS / 1000.) /* Sampling time */
 
 /* Change this size based on the biggest matrix you will use */
