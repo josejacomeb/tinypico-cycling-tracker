@@ -161,10 +161,6 @@ void setup() {
   
   /* Making sure it worked (returns 0 if so) */
   if (devStatus == 0) {
-    mpu.CalibrateAccel(6);  // Calibration Time: generate offsets and calibrate our MPU6050
-    mpu.CalibrateGyro(6);
-    Serial.println("These are the Active offsets: ");
-    mpu.PrintActiveOffsets();
     Serial.println(F("Enabling DMP..."));  //Turning ON DMP
     mpu.setDMPEnabled(true);
 
