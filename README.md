@@ -61,7 +61,8 @@ Tinypico based GPS + IMU + SD data logger for cycling purposes
     3. [TinyGPSPlus](https://docs.arduino.cc/libraries/adafruit-ssd1306/)
 3. Select the `UM TinyPICO` board in the Arduino IDE Tools > Board > ESP32
 4. Select the Communication Port to `/dev/ttyACM0` if you're running on Linux.
-5. Open the folder [code/arduino-tct/](code/arduino-tct/) with the IDE to flash the code to your TinyPICO Board.
+5. Calibrate IMU as shown in the [MPU6050 Zero tutorial](https://github.com/ElectronicCats/mpu6050/wiki/4.-Examples#zero) and copy the offsets to the main code
+6. Open the folder [code/arduino-tct/](code/arduino-tct/) with the IDE to flash the code to your TinyPICO Board.
 
 ## Modes
 

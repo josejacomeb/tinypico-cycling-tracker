@@ -151,14 +151,14 @@ void setup() {
   Serial.println(F("Initializing DMP..."));
   devStatus = mpu.dmpInitialize();
 
-  /* Supply your gyro offsets here, scaled for min sensitivity */
-  mpu.setXGyroOffset(0);
-  mpu.setYGyroOffset(0);
-  mpu.setZGyroOffset(0);
-  mpu.setXAccelOffset(0);
-  mpu.setYAccelOffset(0);
-  mpu.setZAccelOffset(0);
-
+  // Calibration values defined in the constants.hpp
+  mpu.setXAccelOffset(XAccelOffset);
+  mpu.setYAccelOffset(YAccelOffset);
+  mpu.setZAccelOffset(ZAccelOffset);
+  mpu.setXGyroOffset(XGyroOffset);
+  mpu.setYGyroOffset(YGyroOffset);
+  mpu.setZGyroOffset(ZGyroOffset);
+  
   /* Making sure it worked (returns 0 if so) */
   if (devStatus == 0) {
     mpu.CalibrateAccel(6);  // Calibration Time: generate offsets and calibrate our MPU6050
