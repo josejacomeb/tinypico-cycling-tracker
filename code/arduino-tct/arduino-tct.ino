@@ -17,21 +17,6 @@
 // Debug mode
 #define DEBUG 0
 
-// TinyPICO PINS
-// Digital UART Pins for ESP32-PICO-D4
-#define TX 25
-#define RX 26
-// Push Button Pin
-#define INPUT_PIN 33
-// SD Pins control
-#define CS 5
-// MPU Interrupt Pin
-#define INTERRUPT_PIN 2
-// APA102 Dotstar
-#define DOTSTAR_PWR 13
-#define DOTSTAR_DATA 2
-#define DOTSTAR_CLK 12
-
 // Initialise the TinyPICO library
 TinyPICO tp = TinyPICO();
 

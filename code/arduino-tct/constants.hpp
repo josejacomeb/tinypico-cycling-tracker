@@ -1,6 +1,21 @@
 #pragma once
 #include <math.h>
 
+// TinyPICO PINS
+// Digital UART Pins for ESP32-PICO-D4
+#define TX 25
+#define RX 26
+// Push Button Pin
+#define INPUT_PIN 33
+// SD Pins control
+#define CS 5
+// MPU Interrupt Pin
+#define INTERRUPT_PIN 2
+// APA102 Dotstar
+#define DOTSTAR_PWR 13
+#define DOTSTAR_DATA 2
+#define DOTSTAR_CLK 12
+
 const double EARTH_RADIUS = 6371 * 1000.0;  // Meters
 const float deg_2_rad_const = M_PI / 180.0f;
 
