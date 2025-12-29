@@ -261,7 +261,7 @@ void loop() {
     }
   }
   // Calculation of the final position
-  PointEast = getPointAhead(ZeroPoint, sf_lat.get_predicted_position_meters(), 90);
+  PointEast = getPointAhead(ZeroPoint, sf_lat.get_predicted_position_meters(), 270);
   PointNorthEast = getPointAhead(PointEast, sf_lng.get_predicted_position_meters(), 180);
 
   if (millis() - start > period) {

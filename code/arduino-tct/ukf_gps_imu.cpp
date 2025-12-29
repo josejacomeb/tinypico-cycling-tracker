@@ -40,7 +40,7 @@ float UKFGPSIMU::getDistanceMetersPerAxis(TinyGPSLocation& fromPos, TinyGPSLocat
   float to_pos_lat = toPos.lat();
   float from_pos_lng = fromPos.lng();
   float from_pos_lat = fromPos.lat();
-  if (ax == GPSAxis::LATITUDE) {
+  if (ax == GPSAxis::LONGITUDE) {
     to_pos_lng = 0.0;
     from_pos_lng = 0.0;
   } else {
