@@ -8,6 +8,7 @@
 #include <TinyGPS++.h>
 #include <TinyPICO.h>
 
+#include "data_types.hpp"
 #include "oled.hpp"
 #include "ukf_gps_imu.hpp"
 #include "writter.hpp"
@@ -87,17 +88,6 @@ UKFGPSIMU sf_lat, sf_lng;
 
 const unsigned int led_time = 5000;
 
-struct LatLonDeg {
-  double lat;  // Latitude  in degrees, range [-90, +90]
-  double lon;  // Longitude in degrees, range [-180, +180]
-
-  LatLonDeg()
-    : lat(0.0), lon(0.0) {}
-
-  LatLonDeg(double latitude_deg, double longitude_deg)
-    : lat(latitude_deg), lon(longitude_deg) {}
-};
-
 struct LatLonDeg getPointAhead(
   const LatLonDeg& start,
   double distance_m,
@@ -122,7 +112,7 @@ struct LatLonDeg getPointAhead(
 
   return result;
 }
-LatLonDeg ZeroPoint;
+LatLonDeg ZeroPoint, PointEast, PointNorthEast;
 
 void setup() {
   tp.DotStar_Clear();
@@ -270,8 +260,9 @@ void loop() {
       sf_lng.add_gps_position_velocity(gps.location, vEast);
     }
   }
-  LatLonDeg PointEast = getPointAhead(ZeroPoint, sf_lat.get_predicted_position_meters(), 90);
-  LatLonDeg PointNorthEast = getPointAhead(PointEast, sf_lng.get_predicted_position_meters(), 180);
+  // Calculation of the final position
+  PointEast = getPointAhead(ZeroPoint, sf_lat.get_predicted_position_meters(), 90);
+  PointNorthEast = getPointAhead(PointEast, sf_lng.get_predicted_position_meters(), 180);
 
   if (millis() - start > period) {
 #if DEBUG
@@ -298,7 +289,7 @@ void loop() {
         break;
       case State::START_WORKOUT:
         oled_display.update_values(workout.get_total_distance(), workout.get_slope(ypr[1]), workout.paceFromSpeed(speed_m_s), altitude, workout.get_elapsed_workout_time());
-        write_gpx(gps.location, altitude, gps.date, gps.time);
+        write_gpx(PointNorthEast, altitude, gps.date, gps.time);
         break;
       case State::END_WORKOUT:
         write_file(trk_end_tag);
