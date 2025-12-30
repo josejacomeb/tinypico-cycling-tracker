@@ -19,6 +19,7 @@ extern File sd_gpx_file;
 void write_gpx(LatLonDeg& Pos1, double& elevation, TinyGPSDate& date, TinyGPSTime& time);
 void write_header(TinyGPSPlus& gps);
 void write_file(const char* message);
+void set_file_name(TinyGPSPlus& gps, const char* extension);
 const char* return_time_utc(TinyGPSDate& date, TinyGPSTime& time);
 
 #endif

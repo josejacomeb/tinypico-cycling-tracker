@@ -74,22 +74,28 @@ const char* return_time_utc(TinyGPSDate& date, TinyGPSTime& time) {
   return time_buffer;
 }
 
+void set_file_name(TinyGPSPlus& gps, const char* extension){
+  snprintf(
+    GPX_file_path,
+    sizeof(GPX_file_path),
+    "/%04u%02u%02u_%02u%02u%02u.%03s",
+    gps.date.year(),
+    gps.date.month(),
+    gps.date.day(),
+    gps.time.hour(),
+    gps.time.minute(),
+    gps.time.second(), 
+    extension
+  );
+}
+
 // ---- Header Writing Methods ----
 
 void write_header(TinyGPSPlus& gps) {
   // Use snprintf to format and create the entire filename string safely.
   // %04u: 4-digit unsigned integer, zero-padded (for year)
   // %02u: 2-digit unsigned integer, zero-padded (for month, day, hour, minute, second)
-  snprintf(
-    GPX_file_path,
-    sizeof(GPX_file_path),
-    "/%04u%02u%02u_%02u%02u%02u.gpx",
-    gps.date.year(),
-    gps.date.month(),
-    gps.date.day(),
-    gps.time.hour(),
-    gps.time.minute(),
-    gps.time.second());
+  set_file_name(gps, "gpx");
   write_file(header);
   write_file(gpx_header);
   write_file(String("<metadate>" + String(return_time_utc(gps.date, gps.time)) + "</metadate>").c_str());

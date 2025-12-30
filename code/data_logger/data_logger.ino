@@ -1,21 +1,23 @@
 /*
-* Software for the Tinypico GPS Tracker
+* Data Logger for the TinyPico Cycling Tracker
+* Retrieves data from GPS, IMU and save into a .ino file
 * Written by: josejacomeb / 2025
 */
+
 #include <I2Cdev.h>
 #include <MPU6050_6Axis_MotionApps612.h>  // For get no gravity results
 #include <SPI.h>
 #include <TinyGPS++.h>
 #include <TinyPICO.h>
 
-#include "data_types.hpp"
-#include "oled.hpp"
-#include "ukf_gps_imu.hpp"
+#include "constants.hpp"
+#include "konfig.h"
 #include "writter.hpp"
-#include "workout.hpp"
 
-// Debug mode
-#define DEBUG 0
+const unsigned int led_time = 1000;
+double speed_m_s, altitude, latitude, longitude, vNorth, vEast;
+unsigned long start, wait_time, elapsed_time, start_time;
+int16_t accNorth, accEast;
 
 // Initialise the TinyPICO library
 TinyPICO tp = TinyPICO();
@@ -46,56 +48,11 @@ void DMPDataReady() {
 
 // ---- GPS Variables ----
 TinyGPSPlus gps;
-double speed_m_s, altitude;
-unsigned long start;
-const unsigned int period = 16;
-unsigned int display_results_counter = 1;
-const unsigned int max_display_results_counter = 60;
 
-// ---- Application Objects ----
-OLEDGPS oled_display;
-Workout workout;
-
-// ---- State Machine ----
-enum class State {
-  LOADING,
-  WAITING,
-  START_WORKOUT,
-  END_WORKOUT,
-  SUMMARY
-};
-
-State m_state;
-double vNorth, vEast;
-UKFGPSIMU sf_lat, sf_lng;
-
-const unsigned int led_time = 5000;
-
-struct LatLonDeg getPointAhead(
-  const LatLonDeg& start,
-  double distance_m,
-  double bearing_deg) {
-
-  double lat1 = start.lat * M_PI / 180.0;
-  double lon1 = start.lon * M_PI / 180.0;
-  double bearing = bearing_deg * M_PI / 180.0;
-  double delta = distance_m / EARTH_RADIUS;
-
-  double lat2 = asin(
-    sin(lat1) * cos(delta) + cos(lat1) * sin(delta) * cos(bearing));
-
-  double y = sin(bearing) * sin(delta) * cos(lat1);
-  double x = cos(delta) - sin(lat1) * sin(lat2);
-
-  double lon2 = lon1 + atan2(y, x);
-
-  LatLonDeg result;
-  result.lat = lat2 * 180.0 / M_PI;
-  result.lon = lon2 * 180.0 / M_PI;
-
-  return result;
-}
-LatLonDeg ZeroPoint, PointEast, PointNorthEast;
+bool start_writing = false;
+const char* extension = "csv";
+const char* header_data = "time,alt,lat,lng,vNorth,vEast,accNorth,accEast";
+char buffer[128];
 
 void setup() {
   tp.DotStar_Clear();
@@ -104,7 +61,6 @@ void setup() {
   pinMode(INPUT_PIN, INPUT);
   // Used for debug output only
   Serial.begin(115200);
-  oled_display.init_screen();
   // Using I2CDEV_ARDUINO_WIRE
   Wire.begin();
   Wire.setClock(400000);  // 400kHz I2C clock. Comment on this line if having compilation difficulties
@@ -118,7 +74,6 @@ void setup() {
     while (1)
       ;
   }
-  oled_display.init_sd();
   delay(led_time);
   /*Verify connection*/
   Serial.println(F("Testing MPU6050 connection..."));
@@ -141,7 +96,7 @@ void setup() {
   mpu.setXGyroOffset(XGyroOffset);
   mpu.setYGyroOffset(YGyroOffset);
   mpu.setZGyroOffset(ZGyroOffset);
-  
+
   /* Making sure it worked (returns 0 if so) */
   if (devStatus == 0) {
     Serial.println(F("Enabling DMP..."));  //Turning ON DMP
@@ -163,7 +118,6 @@ void setup() {
     Serial.print(devStatus);
     Serial.println(F(")"));
   }
-  oled_display.init_imu();
   tp.DotStar_Clear();
   tp.DotStar_SetPixelColor(237, 230, 21);
   tp.DotStar_Show();
@@ -175,33 +129,38 @@ void setup() {
       gps.encode(Serial2.read());
     }
   }
-  oled_display.init_gps();
   tp.DotStar_Clear();
   tp.DotStar_SetPixelColor(136, 237, 21);
   tp.DotStar_Show();
   delay(led_time);
   tp.DotStar_SetPower(false);
-  m_state = State::WAITING;
-  sf_lat.init(GPSAxis::LATITUDE);
-  sf_lng.init(GPSAxis::LONGITUDE);
-  start = millis();
 }
 
 void loop() {
+  altitude = 0;
+  vNorth = 0;
+  vEast = 0;
+  latitude = 0;
+  longitude = 0;
+  start = millis();
   if (!digitalRead(INPUT_PIN)) {
     delay(500);
     if (digitalRead(INPUT_PIN)) {
-      if (m_state != State::START_WORKOUT) {
-        workout.start();
-        m_state = State::START_WORKOUT;
-        write_header(gps);
-      } else {
-        workout.end();
-        m_state = State::END_WORKOUT;
-      }
+      start_writing = !start_writing;
+      if (start_writing) {
+        tp.DotStar_Clear();
+        tp.DotStar_SetPower(true);
+        tp.DotStar_SetPixelColor(136, 237, 21);
+        tp.DotStar_Show();
+        set_file_name(gps, extension);
+        write_file(header_data);
+        start_time = millis();
+      } else
+        tp.DotStar_SetPower(false);
     }
   }
-  // Cycle the DotStar LED colour every 25 milliseconds
+
+  // IMU Update
   if (!DMPReady) return;  // Stop the program if DMP programming fails.
   /* Read a packet from FIFO */
   if (mpu.dmpGetCurrentFIFOPacket(FIFOBuffer)) {  // Get the Latest packet
@@ -212,10 +171,10 @@ void loop() {
     mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
     mpu.dmpGetLinearAccelInWorld(&aaWorld, &aaReal, &q);
     mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-    // As located in the PCB
-    sf_lat.add_imu_acceleration(aaWorld.y);
-    sf_lng.add_imu_acceleration(aaWorld.x);
+    accNorth = aaWorld.y;
+    accEast = aaWorld.x;
   }
+  // GPU Update
   while (Serial2.available() > 0) {
     gps.encode(Serial2.read());
     if (gps.location.isUpdated() && gps.location.isValid()) {
@@ -223,80 +182,17 @@ void loop() {
       speed_m_s = gps.speed.isValid() ? gps.speed.mps() : 0.0;
       vNorth = speed_m_s * cos(gps.course.deg() * M_PI / 180);
       vEast = speed_m_s * sin(gps.course.deg() * M_PI / 180);
-      unsigned long ts = millis();
-      // distance accumulation
-      if (workout.is_last_pos_valid()) {
-        double d = workout.haversine(workout.get_last_location(), gps.location);
-        // ignore spurious large jumps
-        if (d < 50.0) {
-          if (m_state == State::START_WORKOUT)
-            workout.add_distance(d);
-        }
-      }
-      workout.pushWP(gps.location, altitude);
-      double speed_kmh = speed_m_s * 3.6;
-      sf_lat.add_gps_position_velocity(gps.location, vNorth);
-      sf_lng.add_gps_position_velocity(gps.location, vEast);
+      latitude = gps.location.lat();
+      longitude = gps.location.lng();
     }
   }
-  // Calculation of the final position
-  PointEast = getPointAhead(ZeroPoint, sf_lat.get_predicted_position_meters(), 270);
-  PointNorthEast = getPointAhead(PointEast, sf_lng.get_predicted_position_meters(), 180);
-
-  if (millis() - start > period) {
-#if DEBUG
-    Serial.print("YPR Rad: ");
-    Serial.print(ypr[0]);
-    Serial.print(", ");
-    Serial.print(ypr[1]);
-    Serial.print(", ");
-    Serial.print(ypr[2]);
-    Serial.print(" Lat: ");
-    Serial.print(gps.location.lat(), 6);
-    Serial.print(" Lng: ");
-    Serial.print(gps.location.lng(), 6);
-    Serial.print(" speed: ");
-    Serial.print(speed);
-    Serial.print(" altitude: ");
-    Serial.print(altitude);
-    Serial.print(" Time in UTC: ");
-    Serial.println(String(gps.date.year()) + "/" + String(gps.date.month()) + "/" + String(gps.date.day()) + "," + String(gps.time.hour()) + ":" + String(gps.time.minute()) + ":" + String(gps.time.second()));
-#endif
-    switch (m_state) {
-      case State::WAITING:
-        oled_display.draw_wait_screen(gps.time);
-        break;
-      case State::START_WORKOUT:
-        oled_display.update_values(workout.get_total_distance(), workout.get_slope(ypr[1]), workout.paceFromSpeed(speed_m_s), altitude, workout.get_elapsed_workout_time());
-        write_gpx(PointNorthEast, altitude, gps.date, gps.time);
-        break;
-      case State::END_WORKOUT:
-        write_file(trk_end_tag);
-        write_file(trk_end_segm);
-        write_file("</gpx>");
-        m_state = State::SUMMARY;
-        break;
-      case State::SUMMARY:
-        display_results_counter++;
-        oled_display.display_total_results(workout.get_total_distance(), workout.get_total_ms());
-        if (display_results_counter > max_display_results_counter) {
-          display_results_counter = 1;
-          m_state = State::WAITING;
-        }
-        break;
-    }
-    start = millis();
+  if (start_writing) {
+    sprintf(buffer, "%lu,%.2f,%.6f,%.6f,%.6f,%.6f,%d,%d",
+            millis() - start_time, altitude, latitude, longitude,
+            vNorth, vEast, accNorth, accEast);
+    write_file(buffer);
   }
-}
-
-void SPEW_THE_ERROR(char const* str) {
-#if (SYSTEM_IMPLEMENTATION == SYSTEM_IMPLEMENTATION_PC)
-  cout << (str) << endl;
-#elif (SYSTEM_IMPLEMENTATION == SYSTEM_IMPLEMENTATION_EMBEDDED_ARDUINO)
-  Serial.println(str);
-#else
-  /* Silent function */
-#endif
-  while (1)
-    ;
+  elapsed_time = millis() - start;
+  wait_time = SS_DT_MILIS > elapsed_time ? SS_DT_MILIS - elapsed_time : 0;
+  delay(wait_time);
 }
