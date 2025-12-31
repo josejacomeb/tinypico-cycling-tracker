@@ -3,9 +3,8 @@
 */
 #pragma once
 
-#include <TinyGPSPlus.h>
-
 #include "constants.hpp"
+#include "data_types.hpp"
 #include "konfig.h"
 #include "matrix.h"
 #include "ukf.h"
@@ -20,13 +19,13 @@ class UKFGPSIMU {
 public:
   //UKFGPSIMU();
   void init(GPSAxis ax);
-  bool add_gps_position_velocity(TinyGPSLocation& coord, double& velocity);
+  bool add_gps_position_velocity(LatLonDeg& coord, double& velocity);
   bool add_imu_acceleration(int16_t& acc);
   double& get_predicted_position_meters();
 private:
   GPSAxis ax;
-  TinyGPSLocation zeroLatLng;  // To use that calculation
-  float getDistanceMetersPerAxis(TinyGPSLocation& fromPos, TinyGPSLocation& toPos, bool lat_only = false);
+  LatLonDeg zeroLatLng;  // To use that calculation
+  float getDistanceMetersPerAxis(LatLonDeg& fromPos, LatLonDeg& toPos, bool lat_only = false);
   /* P(k=0) variable -------------------------------------------------------------------------------------------------- */
   float_prec UKF_PINIT_data[SS_X_LEN * SS_X_LEN] = { P_INIT, 0,
                                                      0, P_INIT };

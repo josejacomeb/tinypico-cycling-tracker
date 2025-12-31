@@ -11,7 +11,7 @@ void UKFGPSIMU::init(GPSAxis axis) {
   ax = axis;
 }
 
-bool UKFGPSIMU::add_gps_position_velocity(TinyGPSLocation& coord, double& velocity) {
+bool UKFGPSIMU::add_gps_position_velocity(LatLonDeg& coord, double& velocity) {
   /* ====== Inputs GPS Measurement matrix a.k.a Z(INPUT measurement (GPS) matrix) ===== */
   Y[0][0] = getDistanceMetersPerAxis(coord, zeroLatLng, true);  // Position
   Y[1][0] = velocity;
@@ -34,12 +34,12 @@ bool UKFGPSIMU::add_imu_acceleration(int16_t& acc) {
 double& UKFGPSIMU::get_predicted_position_meters() {
   return predicted_position_meters;
 }
-float UKFGPSIMU::getDistanceMetersPerAxis(TinyGPSLocation& fromPos, TinyGPSLocation& toPos, bool lat_only) {
+float UKFGPSIMU::getDistanceMetersPerAxis(LatLonDeg& fromPos, LatLonDeg& toPos, bool lat_only) {
   // Conversion from Degrees to Radians
-  float to_pos_lng = toPos.lng();
-  float to_pos_lat = toPos.lat();
-  float from_pos_lng = fromPos.lng();
-  float from_pos_lat = fromPos.lat();
+  float to_pos_lng = toPos.lon;
+  float to_pos_lat = toPos.lat;
+  float from_pos_lng = fromPos.lon;
+  float from_pos_lat = fromPos.lat;
   if (ax == GPSAxis::LONGITUDE) {
     to_pos_lng = 0.0;
     from_pos_lng = 0.0;
