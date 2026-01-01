@@ -92,7 +92,7 @@ int main(int argc, char **argv)
     if (first)
     {
       // Write header row
-      outfile << "timestamp,altitude,latitude,longitude,vNorth,vEast,accNorth,accEast" << std::endl;
+      outfile << "time,alt,lat,lng,vNorth,vEast,accNorth,accEast" << std::endl;
       first = false;
       continue;
     }
