@@ -20,12 +20,12 @@ public:
   //UKFGPSIMU();
   void init(GPSAxis ax);
   bool add_gps_position_velocity(LatLonDeg& coord, double& velocity);
-  bool add_imu_acceleration(int16_t& acc);
+  bool add_imu_acceleration(float& acc);
   double& get_predicted_position_meters();
 private:
   GPSAxis ax;
   LatLonDeg zeroLatLng;  // To use that calculation
-  float getDistanceMetersPerAxis(LatLonDeg& fromPos, LatLonDeg& toPos, bool lat_only = false);
+  float getDistanceMetersPerAxis(LatLonDeg& fromPos, LatLonDeg& toPos);
   /* P(k=0) variable -------------------------------------------------------------------------------------------------- */
   float_prec UKF_PINIT_data[SS_X_LEN * SS_X_LEN] = { P_INIT, 0,
                                                      0, P_INIT };

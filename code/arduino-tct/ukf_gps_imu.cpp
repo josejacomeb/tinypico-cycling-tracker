@@ -13,7 +13,7 @@ void UKFGPSIMU::init(GPSAxis axis) {
 
 bool UKFGPSIMU::add_gps_position_velocity(LatLonDeg& coord, double& velocity) {
   /* ====== Inputs GPS Measurement matrix a.k.a Z(INPUT measurement (GPS) matrix) ===== */
-  Y[0][0] = getDistanceMetersPerAxis(coord, zeroLatLng, true);  // Position
+  Y[0][0] = getDistanceMetersPerAxis(coord, zeroLatLng);  // Position
   Y[1][0] = velocity;
   // Update Step
   /* ============================= Update the Kalman Filter ============================== */
@@ -26,7 +26,7 @@ bool UKFGPSIMU::add_gps_position_velocity(LatLonDeg& coord, double& velocity) {
   }
   return true;
 }
-bool UKFGPSIMU::add_imu_acceleration(int16_t& acc) {
+bool UKFGPSIMU::add_imu_acceleration(float& acc) {
   /* ======= Inputs IMU Control Matrix a.k.a. u(INPUT control (accelerometer) matrix) */
   U[0][0] = acc;
   return true;
@@ -34,7 +34,7 @@ bool UKFGPSIMU::add_imu_acceleration(int16_t& acc) {
 double& UKFGPSIMU::get_predicted_position_meters() {
   return predicted_position_meters;
 }
-float UKFGPSIMU::getDistanceMetersPerAxis(LatLonDeg& fromPos, LatLonDeg& toPos, bool lat_only) {
+float UKFGPSIMU::getDistanceMetersPerAxis(LatLonDeg& fromPos, LatLonDeg& toPos) {
   // Conversion from Degrees to Radians
   float to_pos_lng = toPos.lon;
   float to_pos_lat = toPos.lat;
