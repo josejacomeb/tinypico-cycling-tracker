@@ -18,6 +18,7 @@
 
 const double EARTH_RADIUS = 6371 * 1000.0;  // Meters
 const float deg_2_rad_const = M_PI / 180.0f;
+const int LBM_2_M_S2 = 8192;  // Conversion from LBM to m/s^2
 
 /* ================================================== The AHRS/IMU variables ================================================== */
 /* Gravity vector constant (align with global Z-axis) */
