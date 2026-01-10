@@ -51,10 +51,6 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  // Initialize the UKF instances for latitude and longitude
-  sf_lat.init(GPSAxis::LATITUDE);
-  sf_lng.init(GPSAxis::LONGITUDE);
-
   std::filesystem::path input_file = std::filesystem::path(argv[1]);
   std::filesystem::path output_file = std::filesystem::path(argv[2]);
   std::cout << "Input file: " << input_file.stem() << std::endl;
@@ -107,9 +103,6 @@ int main(int argc, char **argv)
       {
       case 0:
         timestamp = std::stoul(cell, nullptr, 0);
-        // Get first value as initial timestamp
-        if (initial_timestamp == 0)
-          initial_timestamp = timestamp;
         break;
       case 1:
         altitude = std::stod(cell);
@@ -137,21 +130,31 @@ int main(int argc, char **argv)
       }
       col_index++;
     }
+    // Get first value as initial timestamp
+    if (initial_timestamp == 0)
+    {
+      std::cout << "Initializing Sensor Fusion UKF..." << std::endl;
+      initial_timestamp = timestamp;
+      // Initialize the UKF instances for latitude and longitude
+      sf_lat.init(GPSAxis::LATITUDE, GPSLatLon, vNorth);
+      sf_lng.init(GPSAxis::LONGITUDE, GPSLatLon, vEast);
+    }
 
     float accNorth_f = static_cast<float>(accNorth / LBM_2_M_S2);
     float accEast_f = static_cast<float>(accEast / LBM_2_M_S2);
     sf_lat.add_imu_acceleration(accNorth_f);
     sf_lng.add_imu_acceleration(accEast_f);
-
-    sf_lat.add_gps_position_velocity(GPSLatLon, vNorth);
-    sf_lng.add_gps_position_velocity(GPSLatLon, vEast);
-
-    // Calculation of the final position
-    PointEast = getPointAhead(ZeroPoint, sf_lat.get_predicted_position_meters(), 270);
-    PointNorthEast = getPointAhead(PointEast, sf_lng.get_predicted_position_meters(), 180);
+    if(GPSLatLon.lat != 0.0 && GPSLatLon.lon != 0.0) {
+      sf_lat.add_gps_position_velocity(GPSLatLon, vNorth);
+      sf_lng.add_gps_position_velocity(GPSLatLon, vEast);
+  
+      // Calculation of the final position
+      PointEast = getPointAhead(ZeroPoint, sf_lat.get_predicted_position_meters(), 270);
+      PointNorthEast = getPointAhead(PointEast, sf_lng.get_predicted_position_meters(), 180);
+    }
 
     std::cout << timestamp << " Predicted Position - Lat: " << std::format("{:.6f}", PointNorthEast.lat) << ", Lon: " << std::format("{:.6f}", PointNorthEast.lon) << "\t";
-    std::cout << "|| Sensor Lat: " << std::format("{:.6f}", GPSLatLon.lat) << ", Long: " << std::format("{:.6f}", GPSLatLon.lon) << std::endl;
+    std::cout << "|| Sensor Lat: " << std::format("{:.6f}", GPSLatLon.lat) << ", Long: " << std::format("{:.6f}", GPSLatLon.lon) << " accNorth_f: " << accNorth_f << std::endl;
     final_timestamp = epoch_millis + (timestamp - initial_timestamp);
     outfile << final_timestamp << "," << altitude << "," << PointNorthEast.lat << "," << PointNorthEast.lon;
     outfile << "," << vNorth << "," << vEast << "," << accNorth << "," << accEast << std::endl;

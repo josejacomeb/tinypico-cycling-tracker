@@ -1,12 +1,14 @@
 #include "ukf_gps_imu.hpp"
 
-void UKFGPSIMU::init(GPSAxis axis) {
+void UKFGPSIMU::init(GPSAxis axis, LatLonDeg& initial_coord, double& initial_velocity) {
   /* UKF system declaration ------------------------------------------------------------------------------------------- */
   UKF_IMU = new UKF(X, UKF_PINIT, UKF_RvINIT, UKF_RnINIT, UKFGPSIMU::Main_bUpdateNonlinearX, UKFGPSIMU::Main_bUpdateNonlinearY);
   /* UKF initialization ----------------------------------------- */
   /* x(k=0) = [1 0 0 0]' */
   X.vSetToZero();
-  X[0][0] = 1.0;
+  X[0][0] = getDistanceMetersPerAxis(initial_coord, zeroLatLng); // Initial Position
+  X[1][0] = initial_velocity; // Initial Velocity
+  std::cout << "Initial Position Meters: " << X[0][0] << " Initial Velocity: " << X[1][0] << std::endl;
   UKF_IMU->vReset(X, UKF_PINIT, UKF_RvINIT, UKF_RnINIT);
   ax = axis;
 }
@@ -18,10 +20,10 @@ bool UKFGPSIMU::add_gps_position_velocity(LatLonDeg& coord, double& velocity) {
   // Update Step
   /* ============================= Update the Kalman Filter ============================== */
   if (!UKF_IMU->bUpdate(Y, U)) {
-    X.vSetToZero();
-    // TODO: Clean up this code
-    // Conversion to Lat Long
     predicted_position_meters = UKF_IMU->GetX()[0][0];
+    X.vSetToZero();
+    X[0][0] = getDistanceMetersPerAxis(coord, zeroLatLng); // Initial Position
+    X[1][0] = velocity; // Initial Velocity
     UKF_IMU->vReset(X, UKF_PINIT, UKF_RvINIT, UKF_RnINIT);
   }
   return true;
@@ -59,8 +61,8 @@ bool UKFGPSIMU::Main_bUpdateNonlinearX(Matrix& X_Next, const Matrix& X, const Ma
   *   p(k+1)=p(k)+v(k)*Δt+1/2*​a(k)Δt^2
   *   v(k+1)=v(k)+a(k)*Δt
   */
-  X_Next[0][0] = X[0][0] + X[0][0] * SS_DT_MILIS + U[0][0] * pow(SS_DT_MILIS, 2) / 2;
-  X_Next[1][0] = X[1][0] + U[1][0] * pow(SS_DT_MILIS, 2);
+  X_Next[0][0] = X[0][0] + X[1][0] * SS_DT_MILIS + U[0][0] * pow(SS_DT_MILIS, 2) / 2;
+  X_Next[1][0] = X[1][0] + U[0][0] * SS_DT_MILIS;
 
   return true;
 }
