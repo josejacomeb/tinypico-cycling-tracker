@@ -18,16 +18,17 @@
 
 const double EARTH_RADIUS = 6371 * 1000.0;  // Meters
 const float deg_2_rad_const = M_PI / 180.0f;
-const int LBM_2_M_S2 = 8192;  // Conversion from LBM to m/s^2
+const int LBM_2_M_S2 = 16384;  // Conversion from LBM to m/s^2
+const float SURFACE_GRAVITIY = 9.771927346; // At Ecuador 2,729 meters altitude
 
 /* ================================================== The AHRS/IMU variables ================================================== */
 /* Gravity vector constant (align with global Z-axis) */
 #define IMU_ACC_Z0 (1)
 
 /* UKF initialization constant -------------------------------------------------------------------------------------- */
-#define P_INIT (10.)
-#define Rv_INIT (1e-6)
-#define Rn_INIT_ACC (0.0015)
+#define P_INIT (2.5) // UBlox 6M Horizontal position accuracy
+const float Rv_INIT = (1e-3 * SURFACE_GRAVITIY); // Calibration Tolerance
+#define Rn_INIT_ACC (0.0015) 
 
 /* Supply your gyro offsets here, scaled for min sensitivity */
 // Please see: https://github.com/ElectronicCats/mpu6050/blob/master/examples/IMU_Zero/IMU_Zero.ino
