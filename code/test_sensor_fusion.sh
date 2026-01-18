@@ -25,3 +25,5 @@ input_basename=$(basename "$input_csv" .csv)
 python3 test_ukf_py/sensor_fusion.py --input_csv "$input_csv" --output_csv "${input_basename}_output.csv"
 # 6. Convert the output CSV to GPX format
 python3 utils/csv_to_gpx.py --input_csv "${input_basename}_output.csv" --output_gpx "${input_basename}_output.gpx"
+# 6.1 Convert original data sensor data to GPX format for comparison
+python3 utils/csv_to_gpx.py --input_csv "$input_csv" --output_gpx "${input_basename}.gpx"
