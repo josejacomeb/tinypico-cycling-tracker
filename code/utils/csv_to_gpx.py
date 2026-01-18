@@ -66,14 +66,13 @@ def main():
             return -1
         start_dt = datetime.datetime.strptime(
             args.date_time_gpx, DATETIME_FORMAT
-        )#.replace(tzinfo=tz)
+        ).replace(tzinfo=datetime.timezone.utc)
         # Sum the real time to the time offsets of the microcontroller
         df["time"] = df["time"].apply(
             lambda x: int(
                 (start_dt + datetime.timedelta(milliseconds=int(x))).timestamp() * 1e3
             )
         )
-        print(df.head())
     gpx = gpxpy.gpx.GPX()
     # Create GPX track
     gpx_track = gpxpy.gpx.GPXTrack()
