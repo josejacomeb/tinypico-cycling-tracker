@@ -1,8 +1,12 @@
 import pathlib
 import argparse
+import datetime
+import pytz
 
 import pandas as pd
 import gpxpy
+
+DATETIME_FORMAT = "%Y%m%d_%H%M%S"
 
 
 def build_argparser() -> argparse.ArgumentParser:
@@ -22,6 +26,20 @@ def build_argparser() -> argparse.ArgumentParser:
         help="Path to the output GPX file.",
         type=pathlib.Path,
     )
+    parser.add_argument(
+        "-dt",
+        "--date_time_gpx",
+        help=f"Original datetime of the file in UTC {DATETIME_FORMAT} format.",
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
+        "-tz",
+        "--timezone_gpx",
+        help="Timezone of the original datetime",
+        type=str,
+        default="America/Guayaquil",
+    )
     return parser
 
 
@@ -38,6 +56,24 @@ def main():
     df = df[df["lat"] != 0]
     # df = df.dropna(subset=["lat", "lng"])
     print(f"Removed rows with missing lat/lng: new total {len(df)}")
+    # Check for time that corresponds to an actual one
+    tz = pytz.timezone(args.timezone_gpx)
+    print(f"Using conversion timezone: {args.timezone_gpx}")
+    if df.iloc[0]["time"] < 1e12:
+        print("Data is not in timestamp format, converting...")
+        if args.date_time_gpx is None:
+            print("No datetime for the file specified, program terminating.")
+            return -1
+        start_dt = datetime.datetime.strptime(
+            args.date_time_gpx, DATETIME_FORMAT
+        )#.replace(tzinfo=tz)
+        # Sum the real time to the time offsets of the microcontroller
+        df["time"] = df["time"].apply(
+            lambda x: int(
+                (start_dt + datetime.timedelta(milliseconds=int(x))).timestamp() * 1e3
+            )
+        )
+        print(df.head())
     gpx = gpxpy.gpx.GPX()
     # Create GPX track
     gpx_track = gpxpy.gpx.GPXTrack()
@@ -51,6 +87,7 @@ def main():
             latitude=row["lat"],
             longitude=row["lng"],
             elevation=row["alt"] if "alt" in row else None,
+            time=datetime.datetime.fromtimestamp(row["time"] / 1e3, tz=tz),
         )
         gpx_segment.points.append(point)
 
