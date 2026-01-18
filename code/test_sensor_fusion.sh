@@ -17,7 +17,11 @@ if [[ ! -f "$input_csv" ]]; then
 fi
 
 source .venv/bin/activate
-# 4. Run the Python script with the provided CSV file and output to GPX
-python3 test_ukf_py/sensor_fusion.py --input_csv "$input_csv" --output_csv "fused_output.csv"
 
-python3 utils/csv_to_gpx.py --input_csv "fused_output.csv" --output_gpx "fused_output.gpx"
+# 4. Extract the base name from input_csv without extension for output naming
+input_basename=$(basename "$input_csv" .csv)
+
+# 5. Apply sensor fusion using the UKF implementation
+python3 test_ukf_py/sensor_fusion.py --input_csv "$input_csv" --output_csv "${input_basename}_output.csv"
+# 6. Convert the output CSV to GPX format
+python3 utils/csv_to_gpx.py --input_csv "${input_basename}_output.csv" --output_gpx "${input_basename}_output.gpx"
