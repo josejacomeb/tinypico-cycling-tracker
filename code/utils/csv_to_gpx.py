@@ -28,12 +28,16 @@ def build_argparser() -> argparse.ArgumentParser:
 def main():
     args = build_argparser().parse_args()
     input_csv: pathlib.Path = args.input_csv
+    print(f"Reading CSV file from: {input_csv}")
     output_gpx: pathlib.Path = args.output_gpx
     if output_gpx is None:
         output_gpx = pathlib.Path(input_csv.parent, f"{input_csv.stem}_output.gpx")
 
     df = pd.read_csv(input_csv)
-    df = df.dropna(subset=["lat", "lng"])
+    print(f"Number of rows in CSV: {len(df)}")
+    df = df[df["lat"] != 0]
+    # df = df.dropna(subset=["lat", "lng"])
+    print(f"Removed rows with missing lat/lng: new total {len(df)}")
     gpx = gpxpy.gpx.GPX()
     # Create GPX track
     gpx_track = gpxpy.gpx.GPXTrack()
@@ -46,12 +50,13 @@ def main():
         point = gpxpy.gpx.GPXTrackPoint(
             latitude=row["lat"],
             longitude=row["lng"],
-            elevation=None,  # TODO: Calculate elevation later
+            elevation=row["alt"] if "alt" in row else None,
         )
         gpx_segment.points.append(point)
 
     with open(output_gpx, "w") as f:
         f.write(gpx.to_xml())
+    print(f"GPX file saved to: {output_gpx}")
 
 
 if __name__ == "__main__":
