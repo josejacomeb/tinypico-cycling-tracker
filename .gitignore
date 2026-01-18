@@ -41,3 +41,13 @@ fp-info-cache
 
 # KiKit archives
 .venv/
+# Python Specifics
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[codz]
+*$py.class
+
+# Environments
+code/.venv/
+# GPX Files 
+*.gpx
