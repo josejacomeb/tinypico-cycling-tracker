@@ -1,5 +1,6 @@
 import argparse
 import pathlib
+import json
 
 import gpxpy
 import pandas as pd
@@ -85,6 +86,17 @@ def main():
     print(f"Longitude RMSE: {rmse_lon_deg:.7f} deg  (~{rmse_lon_m:.3f} meters)")
     print(f"GPX file: {gpx_file}")
     print(f"Reference file: {gt_file}")
+    final_results = {
+        "rmse_lat_deg": rmse_lat_deg,
+        "rmse_lon_deg": rmse_lon_deg,
+        "rmse_lat_m": rmse_lat_m,
+        "rmse_lon_m": rmse_lon_m,
+        "gpx_file": str(gpx_file),
+        "reference_file": str(gt_file),
+    }
+    output_path = gpx_file.parent / f"{gpx_file.stem}_{gt_file.stem}_results.json"
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(final_results, f, indent=4)
 
 
 if __name__ == "__main__":
