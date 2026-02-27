@@ -20,12 +20,13 @@ fi
 source .venv/bin/activate
 
 # 4. Extract the base name from INPUT_CSV without extension for output naming
+input_dir=$(dirname "$INPUT_CSV")
 input_basename=$(basename "$INPUT_CSV" .csv)
 
 # 5. Apply sensor fusion using the UKF implementation
-OUTPUT_UKF_CSV="${input_basename}_output_ukf.csv"
-OUTPUT_UKF_GPX="${input_basename}_output_ukf.gpx"
-OUTPUT_RAW_DATA_GPX="${input_basename}.gpx"
+OUTPUT_UKF_CSV="${input_dir}/${input_basename}_output_ukf.csv"
+OUTPUT_UKF_GPX="${input_dir}/${input_basename}_output_ukf.gpx"
+OUTPUT_RAW_DATA_GPX="${input_dir}/${input_basename}_output_raw.gpx"
 
 python3 test_ukf_py/sensor_fusion.py --input_csv "$INPUT_CSV" --output_csv "$OUTPUT_UKF_CSV"
 # 6. Convert the output CSV to GPX format
@@ -36,7 +37,9 @@ python3 utils/csv_to_gpx.py --input_csv "$INPUT_CSV" --output_gpx "$OUTPUT_RAW_D
 
 # 7. Validate results if a GT is provided
 if [[ -n "$GT_GPX" ]]; then
-    echo "Validating the data with ground truth: $GT_GPX"
+    echo "--------- Validating the data with ground truth: $GT_GPX ---------"
     python3 utils/validate_gpx_performance.py --input "$OUTPUT_UKF_GPX" --ground_truth "$GT_GPX"
     python3 utils/validate_gpx_performance.py --input "$OUTPUT_RAW_DATA_GPX" --ground_truth "$GT_GPX"
+    echo "------------------------------------------------------------------"
+    
 fi
