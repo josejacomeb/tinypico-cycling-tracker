@@ -51,3 +51,6 @@ __pycache__/
 code/.venv/
 # GPX Files 
 *.gpx
+
+# Code run UKF in a the batch script
+code/batch_sf_test.sh
