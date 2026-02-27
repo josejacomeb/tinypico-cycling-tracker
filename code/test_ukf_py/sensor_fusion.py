@@ -66,15 +66,16 @@ def main():
             PointNorthEastUKF = get_point_ahead(PointEastUKF, ukf_sf_lon.position, 180)
             ukf_results.append(
                 {
+                    "time": row["time"],
                     "lat": PointNorthEastUKF.lat,
                     "lng": PointNorthEastUKF.lon,
                     "vNorth": ukf_sf_lat.velocity,
                     "vEast": ukf_sf_lon.velocity,
-                    "time": row["time"],
                 }
             )
     df_ukf = pd.DataFrame(ukf_results)
     df_ukf.to_csv(args.output_csv, index=False)
+
 
 if __name__ == "__main__":
     main()
