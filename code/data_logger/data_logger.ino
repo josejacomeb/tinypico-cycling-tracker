@@ -1,23 +1,25 @@
 /*
 * Data Logger for the TinyPico Cycling Tracker
-* Retrieves data from GPS, IMU and save into a .ino file
+* Retrieves data from GPS, IMU and saves data into a .csv file
 * Written by: josejacomeb / 2025
 */
 
 #include <I2Cdev.h>
-#include <MPU6050_6Axis_MotionApps612.h>  // For get no gravity results
+#include <MPU6050_6Axis_MotionApps612.h>
 #include <SPI.h>
 #include <TinyGPS++.h>
 #include <TinyPICO.h>
 
 #include "constants.hpp"
 #include "konfig.h"
-#include "writter.hpp"
+#include "writer.hpp"
 
 const unsigned int led_time = 1000;
 double speed_m_s, altitude, latitude, longitude, vNorth, vEast;
 unsigned long start, wait_time, elapsed_time, start_time;
-int16_t accNorth, accEast;
+// Acceleration in m/s² (converted from raw DMP counts at read time).
+// Using float keeps units consistent with vNorth/vEast (m/s) in the CSV.
+float accNorth, accEast;
 
 // Initialise the TinyPICO library
 TinyPICO tp = TinyPICO();
@@ -52,21 +54,30 @@ TinyGPSPlus gps;
 bool start_writing = false;
 const char* extension = "csv";
 const char* header_data = "time,alt,lat,lng,vNorth,vEast,accNorth,accEast";
+// GPS columns (lat, lng, vNorth, vEast, alt) contain NaN when no GPS fix
 char buffer[128];
+
+// GPS fields written as NaN when no fix arrives in the current 20 ms cycle.
+// IMU acceleration is always valid and written every cycle.
+bool gps_updated_this_cycle = false;
+
+// GPS acquisition timeout to avoid hanging forever in setup().
+const unsigned long GPS_TIMEOUT_MS = 300000UL;  // 5 minutes
 
 void setup() {
   tp.DotStar_Clear();
   tp.DotStar_SetPixelColor(242, 57, 29);
   tp.DotStar_Show();
-  pinMode(INPUT_PIN, INPUT);
+  // Button should connect INPUT_PIN to GND when pressed (active-low logic).
+  pinMode(INPUT_PIN, INPUT_PULLUP);
   // Used for debug output only
   Serial.begin(115200);
   // Using I2CDEV_ARDUINO_WIRE
   Wire.begin();
   Wire.setClock(400000);  // 400kHz I2C clock. Comment on this line if having compilation difficulties
-  /*Initialize device*/
   Serial.println(F("Initializing I2C devices..."));
   mpu.initialize();
+  /*Initialize device*/
   pinMode(INTERRUPT_PIN, INPUT);
   Serial.println("Initializing SD card...");
   if (!SD.begin(CS)) {
@@ -124,28 +135,51 @@ void setup() {
   delay(led_time);
   Serial2.begin(9600, SERIAL_8N1, RX, TX);
   Serial.println("Starting Serial 2...");
+
+  // DotStar blinks orange during GPS search; turns green on fix.
+  unsigned long gps_wait_start = millis();
+  bool blink_state = false;
+  Serial.println("Waiting for GPS fix...");
   while (!gps.location.isValid()) {
     while (Serial2.available() > 0) {
       gps.encode(Serial2.read());
     }
+    // Blink orange to show we're waiting
+    if (millis() - gps_wait_start > 500) {
+      blink_state = !blink_state;
+      if (blink_state) tp.DotStar_SetPixelColor(237, 180, 21);
+      else tp.DotStar_Clear();
+      tp.DotStar_Show();
+      gps_wait_start = millis();
+    }
+    // Timeout — allow device to continue without GPS fix
+    if (millis() - gps_wait_start > GPS_TIMEOUT_MS) {
+      Serial.println("GPS timeout — continuing without fix.");
+      break;
+    }
   }
+
   tp.DotStar_Clear();
   tp.DotStar_SetPixelColor(136, 237, 21);
   tp.DotStar_Show();
   delay(led_time);
   tp.DotStar_SetPower(false);
+  Serial.println("Ready...");
 }
 
 void loop() {
-  altitude = 0;
-  vNorth = 0;
-  vEast = 0;
-  latitude = 0;
-  longitude = 0;
+  // Instead, only write a CSV row when GPS has actually produced a new fix this cycle.
+  // The old approach wrote lat=0,lon=0 on every cycle without a GPS update.
+  gps_updated_this_cycle = false;
   start = millis();
+
+  // ---- Button debounce (active-low with INPUT_PULLUP) ----
   if (!digitalRead(INPUT_PIN)) {
-    delay(500);
-    if (digitalRead(INPUT_PIN)) {
+    delay(50);  // debounce
+    if (!digitalRead(INPUT_PIN)) {
+      // Wait for release
+      while (!digitalRead(INPUT_PIN))
+        ;
       start_writing = !start_writing;
       if (start_writing) {
         tp.DotStar_Clear();
@@ -153,45 +187,62 @@ void loop() {
         tp.DotStar_SetPixelColor(136, 237, 21);
         tp.DotStar_Show();
         set_file_name(gps, extension);
+        open_log_file();  // Manually Start the log file because we're not writting to gpx
         write_file(header_data);
         start_time = millis();
-      } else
+      } else {
         tp.DotStar_SetPower(false);
+        close_log_file();
+      }
     }
   }
 
-  // IMU Update
-  if (!DMPReady) return;  // Stop the program if DMP programming fails.
-  /* Read a packet from FIFO */
-  if (mpu.dmpGetCurrentFIFOPacket(FIFOBuffer)) {  // Get the Latest packet
-    /* Display Euler angles in degrees */
+  // ---- IMU Update ----
+  if (!DMPReady) return;
+  if (mpu.dmpGetCurrentFIFOPacket(FIFOBuffer)) {
     mpu.dmpGetQuaternion(&q, FIFOBuffer);
     mpu.dmpGetAccel(&aa, FIFOBuffer);
     mpu.dmpGetGravity(&gravity, &q);
     mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
     mpu.dmpGetLinearAccelInWorld(&aaWorld, &aaReal, &q);
     mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-    accNorth = aaWorld.y;
-    accEast = aaWorld.x;
+    // Convert raw DMP counts → m/s² immediately.
+    // LSB_PER_G = 16384 counts/g at ±2g full scale (MPU6050 datasheet).
+    // Multiplying by SURFACE_GRAVITY converts from g to m/s².
+    accNorth = (aaWorld.y / (float)LSB_PER_G) * SURFACE_GRAVITY;
+    accEast = (aaWorld.x / (float)LSB_PER_G) * SURFACE_GRAVITY;
   }
-  // GPU Update
+
+  // ---- GPS Update ----
   while (Serial2.available() > 0) {
     gps.encode(Serial2.read());
     if (gps.location.isUpdated() && gps.location.isValid()) {
       altitude = gps.altitude.isValid() ? gps.altitude.meters() : 0.0;
       speed_m_s = gps.speed.isValid() ? gps.speed.mps() : 0.0;
-      vNorth = speed_m_s * cos(gps.course.deg() * M_PI / 180);
-      vEast = speed_m_s * sin(gps.course.deg() * M_PI / 180);
+      vNorth = speed_m_s * cos(gps.course.deg() * M_PI / 180.0);
+      vEast = speed_m_s * sin(gps.course.deg() * M_PI / 180.0);
       latitude = gps.location.lat();
       longitude = gps.location.lng();
+      gps_updated_this_cycle = true;
     }
   }
+
+  // Write a row every SS_DT_MILIS ms cycle — IMU data is always present.
+  // GPS columns are written as NaN when no fix arrived this cycle so that
+  // sensor_fusion.py can distinguish predict-only rows from GPS update rows.
   if (start_writing) {
-    sprintf(buffer, "%lu,%.2f,%.6f,%.6f,%.6f,%.6f,%d,%d",
-            millis() - start_time, altitude, latitude, longitude,
-            vNorth, vEast, accNorth, accEast);
+    if (gps_updated_this_cycle) {
+      sprintf(buffer, "%lu,%.2f,%.6f,%.6f,%.6f,%.6f,%.4f,%.4f",
+              millis() - start_time, altitude, latitude, longitude,
+              vNorth, vEast, accNorth, accEast);
+    } else {
+      // NaN in GPS columns; accNorth/accEast always valid
+      sprintf(buffer, "%lu,NaN,NaN,NaN,NaN,NaN,%.4f,%.4f",
+              millis() - start_time, accNorth, accEast);
+    }
     write_file(buffer);
   }
+
   elapsed_time = millis() - start;
   wait_time = SS_DT_MILIS > elapsed_time ? SS_DT_MILIS - elapsed_time : 0;
   delay(wait_time);
