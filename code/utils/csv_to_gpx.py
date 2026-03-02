@@ -53,8 +53,7 @@ def main():
 
     df = pd.read_csv(input_csv)
     print(f"Number of rows in CSV: {len(df)}")
-    df = df[df["lat"] != 0]
-    # df = df.dropna(subset=["lat", "lng"])
+    df = df.dropna(subset=["lat", "lng"])
     print(f"Removed rows with missing lat/lng: new total {len(df)}")
     # Check for time that corresponds to an actual one
     tz = pytz.timezone(args.timezone_gpx)
