@@ -20,6 +20,7 @@ unsigned long start, wait_time, elapsed_time, start_time;
 // Acceleration in m/s² (converted from raw DMP counts at read time).
 // Using float keeps units consistent with vNorth/vEast (m/s) in the CSV.
 float accNorth, accEast;
+float elapsed_seconds;
 
 // Initialise the TinyPICO library
 TinyPICO tp = TinyPICO();
@@ -231,14 +232,15 @@ void loop() {
   // GPS columns are written as NaN when no fix arrived this cycle so that
   // sensor_fusion.py can distinguish predict-only rows from GPS update rows.
   if (start_writing) {
+    elapsed_seconds = (millis() - start_time) / 1000.0f;
     if (gps_updated_this_cycle) {
-      sprintf(buffer, "%lu,%.2f,%.6f,%.6f,%.6f,%.6f,%.4f,%.4f",
-              millis() - start_time, altitude, latitude, longitude,
+      sprintf(buffer, "%.4f,%.2f,%.6f,%.6f,%.6f,%.6f,%.4f,%.4f",
+              elapsed_seconds, altitude, latitude, longitude,
               vNorth, vEast, accNorth, accEast);
     } else {
       // NaN in GPS columns; accNorth/accEast always valid
-      sprintf(buffer, "%lu,NaN,NaN,NaN,NaN,NaN,%.4f,%.4f",
-              millis() - start_time, accNorth, accEast);
+      sprintf(buffer, "%.4f,NaN,NaN,NaN,NaN,NaN,%.4f,%.4f",
+              elapsed_seconds, accNorth, accEast);
     }
     write_file(buffer);
   }
