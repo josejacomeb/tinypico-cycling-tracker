@@ -1,16 +1,31 @@
 import argparse
 import pathlib
 import json
+import typing
 
 import gpxpy
 import pandas as pd
 import numpy as np
 
 
-def load_gpx_data(gpx_path, round: bool = False) -> pd.DataFrame:
+def get_total_time_distance(moving_data: gpxpy.gpx.MovingData) -> dict:
+    return {
+        "moving_distance": moving_data.moving_distance,
+        "moving_time": moving_data.moving_time,
+        "stopped_distance": moving_data.stopped_distance,
+        "stopped_time": moving_data.stopped_time,
+        "total_distance": moving_data.moving_distance + moving_data.stopped_distance,
+        "total_time": moving_data.moving_time + moving_data.stopped_time,
+    }
+
+
+def load_gpx_data(
+    gpx_path, round: bool = False
+) -> typing.Tuple[pd.DataFrame, gpxpy.gpx.MovingData]:
     with open(gpx_path, "r") as f:
         gpx = gpxpy.parse(f)
-
+    moving_data = gpx.get_moving_data()
+    moving_data.stopped_distance
     points = []
     for track in gpx.tracks:
         for segment in track.segments:
@@ -21,7 +36,7 @@ def load_gpx_data(gpx_path, round: bool = False) -> pd.DataFrame:
     # Round location every second (Assumption: Speed is average of walking)
     df["time"] = pd.to_datetime(df["time"], utc=True).dt.round("s")
     df = df.set_index("time")
-    return df[~df.index.duplicated(keep="last")]  # Drop duplicate times
+    return df[~df.index.duplicated(keep="last")], moving_data  # Drop duplicate times
 
 
 def build_argparser() -> argparse.ArgumentParser:
@@ -50,18 +65,21 @@ def main():
     gpx_file: pathlib.Path = args.input
     gt_file: pathlib.Path = args.ground_truth
 
-    df_ukf = load_gpx_data(gpx_file)
-    df_ref = load_gpx_data(gt_file)
+    df_gpx, ukf_moving_data = load_gpx_data(gpx_file)
+    df_gt, ref_moving_data = load_gpx_data(gt_file)
+    moving_data_gpx = get_total_time_distance(ukf_moving_data)
+    moving_data_gt = get_total_time_distance(ref_moving_data)
+
     # --- 2. Synchronize (Resample & Interpolate) ---
     # Find overlapping time window
-    start = max(df_ukf.index.min(), df_ref.index.min())
-    end = min(df_ukf.index.max(), df_ref.index.max())
+    start = max(df_gpx.index.min(), df_gt.index.min())
+    end = min(df_gpx.index.max(), df_gt.index.max())
 
     # Create a common 1-second grid (modify '100L' for 100ms if you need higher precision)
     common_time = pd.date_range(start=start, end=end, freq="1s")
     # Interpolate both to the common grid
-    ukf_sync = df_ukf.reindex(common_time).interpolate(method="time")
-    ref_sync = df_ref.reindex(common_time).interpolate(method="time")
+    ukf_sync = df_gpx.reindex(common_time).interpolate(method="time")
+    ref_sync = df_gt.reindex(common_time).interpolate(method="time")
 
     # --- 3. Calculate RMSE (Degrees) ---
     lat_error_deg = ukf_sync["lat"] - ref_sync["lat"]
@@ -80,10 +98,20 @@ def main():
     rmse_lat_m = rmse_lat_deg * meters_per_deg_lat
     rmse_lon_m = rmse_lon_deg * meters_per_deg_lon
 
+    # Diff in the distance calculation
+    distance_difference = (
+        moving_data_gt["total_distance"] - moving_data_gpx["total_distance"]
+    )
+
     # --- 5. Output Results ---
     print("=== RMSE VALIDATION ===")
     print(f"Latitude RMSE:  {rmse_lat_deg:.7f} deg  (~{rmse_lat_m:.3f} meters)")
     print(f"Longitude RMSE: {rmse_lon_deg:.7f} deg  (~{rmse_lon_m:.3f} meters)")
+    print(
+        f"Moving Distance GT: {moving_data_gt['total_distance']:.3f} meters,"
+        f" GPX: {moving_data_gpx['total_distance']:.3f} meters, "
+        f"Distance Difference: {distance_difference:.3f} meters"
+    )
     print(f"GPX file: {gpx_file}")
     print(f"Reference file: {gt_file}")
     final_results = {
@@ -91,8 +119,11 @@ def main():
         "rmse_lon_deg": rmse_lon_deg,
         "rmse_lat_m": rmse_lat_m,
         "rmse_lon_m": rmse_lon_m,
+        "distance_difference": distance_difference,
         "gpx_file": str(gpx_file),
         "reference_file": str(gt_file),
+        "total_gpx": moving_data_gpx,
+        "total_gt": moving_data_gt,
     }
     output_path = gpx_file.parent / f"{gpx_file.stem}_{gt_file.stem}_results.json"
     with open(output_path, "w", encoding="utf-8") as f:
