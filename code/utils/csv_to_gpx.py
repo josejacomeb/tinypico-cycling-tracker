@@ -97,9 +97,9 @@ def main():
 
     for ts, row in df.iterrows():
         point = gpxpy.gpx.GPXTrackPoint(
-            latitude=row["lat"],
-            longitude=row["lng"],
-            elevation=row["alt"] if "alt" in row else None,
+            latitude=round(row["lat"], 8),
+            longitude=round(row["lng"], 8),
+            elevation=round(row["alt"], 2) if "alt" in row else None,
             time=ts.astimezone(tz),
         )
         gpx_segment.points.append(point)
