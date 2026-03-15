@@ -1,0 +1,4 @@
+ipykernel==7.2.*
+filterpy==1.*
+folium==0.*
+pandas==2.*
