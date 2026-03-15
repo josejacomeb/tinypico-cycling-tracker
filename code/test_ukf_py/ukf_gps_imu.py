@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from filterpy.kalman import UnscentedKalmanFilter, MerweScaledSigmaPoints
 import numpy as np
-from constants import X_LEN, Z_LEN, U_LEN, EARTH_RADIUS, P_INIT, GPS_VEL_STD
+from constants import X_LEN, Z_LEN, U_LEN, EARTH_RADIUS
 from data_types import LatLonDeg, GPSAxis
 import math
 
@@ -51,6 +51,7 @@ class UKFGPSIMU:
 
     ax: GPSAxis  # Axis this filter tracks (LATITUDE or LONGITUDE)
     posstd: float  # GPS position noise std dev (m)
+    velstd: float  # GPS velocity noise std dev (m/s)
     accstd: float  # IMU acceleration noise std dev (m/s²)
     dt: float = 0.1  # nominal sample period (s) — matches SS_DT_MILIS=100
 
@@ -91,7 +92,7 @@ class UKFGPSIMU:
             ]
         )
         # Initial Covariance
-        self.ukf.P = np.eye(self.X_LEN) * P_INIT
+        self.ukf.P = np.eye(self.X_LEN) * self.posstd
 
         self.a = 0.0
         self.current_timestamp = 0.0
@@ -153,7 +154,7 @@ class UKFGPSIMU:
 
     def add_imu_acceleration(self, imu_acc: float, timestamp: float):
         """UKF predict step: propagate state forward using IMU acceleration."""
-        self.dt = (timestamp - self.current_timestamp)
+        self.dt = timestamp - self.current_timestamp
         if self.dt <= 0:
             return  # Guard against duplicate or out-of-order timestamps
         self.a = imu_acc
