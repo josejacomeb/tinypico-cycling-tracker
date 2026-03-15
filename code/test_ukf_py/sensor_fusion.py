@@ -133,8 +133,9 @@ def main():
                 "time": time,
                 "lat": point_ne.lat,
                 "lng": point_ne.lon,
-                "vNorth": ukf_east.velocity,
-                "vEast": ukf_north.velocity,
+                "alt": row["alt"] if "alt" in row else None,
+                "vNorth": ukf_north.velocity,
+                "vEast": ukf_east.velocity,
                 "gps_update": gps_available,  # True on rows where GPS was fused
             }
         )
