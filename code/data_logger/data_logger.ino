@@ -15,7 +15,7 @@
 #include "writer.hpp"
 
 const unsigned int led_time = 1000;
-double speed_m_s, altitude, latitude, longitude, vNorth, vEast;
+double speed_m_s, altitude, latitude, longitude, vNorth, vEast, course_rad;
 unsigned long start, wait_time, elapsed_time, start_time;
 // Acceleration in m/s² (converted from raw DMP counts at read time).
 // Using float keeps units consistent with vNorth/vEast (m/s) in the CSV.
@@ -54,7 +54,7 @@ TinyGPSPlus gps;
 
 bool start_writing = false;
 const char* extension = "csv";
-const char* header_data = "time,alt,lat,lng,vNorth,vEast,accNorth,accEast";
+const char* header_data = "time,alt,lat,lng,vNorth,vEast,accNorth,accEast,gpsUpdate";
 // GPS columns (lat, lng, vNorth, vEast, alt) contain NaN when no GPS fix
 char buffer[128];
 
@@ -141,20 +141,22 @@ void setup() {
   unsigned long gps_wait_start = millis();
   bool blink_state = false;
   Serial.println("Waiting for GPS fix...");
+  unsigned long gps_blink_start = millis();
+  unsigned long gps_timeout_start = millis();
   while (!gps.location.isValid()) {
     while (Serial2.available() > 0) {
       gps.encode(Serial2.read());
     }
     // Blink orange to show we're waiting
-    if (millis() - gps_wait_start > 500) {
+    if (millis() - gps_blink_start > 500) {
       blink_state = !blink_state;
       if (blink_state) tp.DotStar_SetPixelColor(237, 180, 21);
       else tp.DotStar_Clear();
       tp.DotStar_Show();
-      gps_wait_start = millis();
+      gps_blink_start = millis();
     }
     // Timeout — allow device to continue without GPS fix
-    if (millis() - gps_wait_start > GPS_TIMEOUT_MS) {
+    if (millis() - gps_timeout_start > GPS_TIMEOUT_MS) {
       Serial.println("GPS timeout — continuing without fix.");
       break;
     }
@@ -218,10 +220,16 @@ void loop() {
   while (Serial2.available() > 0) {
     gps.encode(Serial2.read());
     if (gps.location.isUpdated() && gps.location.isValid()) {
-      altitude = gps.altitude.isValid() ? gps.altitude.meters() : 0.0;
-      speed_m_s = gps.speed.isValid() ? gps.speed.mps() : 0.0;
-      vNorth = speed_m_s * cos(gps.course.deg() * M_PI / 180.0);
-      vEast = speed_m_s * sin(gps.course.deg() * M_PI / 180.0);
+      altitude = gps.altitude.isValid() ? gps.altitude.meters() : NAN;
+      if (gps.speed.isValid() && gps.course.isValid()) {
+        speed_m_s = gps.speed.mps();
+        course_rad = gps.course.deg() * M_PI / 180.0;
+        vNorth = speed_m_s * cos(course_rad);
+        vEast = speed_m_s * sin(course_rad);
+      } else {
+        vNorth = NAN;
+        vEast = NAN;
+      }
       latitude = gps.location.lat();
       longitude = gps.location.lng();
       gps_updated_this_cycle = true;
@@ -234,12 +242,12 @@ void loop() {
   if (start_writing) {
     elapsed_seconds = (millis() - start_time) / 1000.0f;
     if (gps_updated_this_cycle) {
-      sprintf(buffer, "%.4f,%.2f,%.6f,%.6f,%.6f,%.6f,%.4f,%.4f",
+      sprintf(buffer, "%.4f,%.2f,%.6f,%.6f,%.6f,%.6f,%.4f,%.4f,1",
               elapsed_seconds, altitude, latitude, longitude,
               vNorth, vEast, accNorth, accEast);
     } else {
       // NaN in GPS columns; accNorth/accEast always valid
-      sprintf(buffer, "%.4f,NaN,NaN,NaN,NaN,NaN,%.4f,%.4f",
+      sprintf(buffer, "%.4f,NaN,NaN,NaN,NaN,NaN,%.4f,%.4f,0",
               elapsed_seconds, accNorth, accEast);
     }
     write_file(buffer);
