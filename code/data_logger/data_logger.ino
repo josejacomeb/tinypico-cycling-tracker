@@ -14,8 +14,11 @@
 #include "konfig.h"
 #include "writer.hpp"
 
+// See the data in the Arduino Serial Plotter https://docs.arduino.cc/software/ide-v2/tutorials/ide-v2-serial-plotter/
+#define SERIAL_PLOTTER 1
+
 const unsigned int led_time = 1000;
-double speed_m_s, altitude, latitude, longitude, vNorth, vEast, course_rad;
+double speed_m_s, altitude, latitude, longitude, vNorth, vEast, course_rad, course_deg;
 unsigned long start, wait_time, elapsed_time, start_time;
 // Acceleration in m/s² (converted from raw DMP counts at read time).
 // Using float keeps units consistent with vNorth/vEast (m/s) in the CSV.
@@ -212,8 +215,8 @@ void loop() {
     // Convert raw DMP counts → m/s² immediately.
     // LSB_PER_G = 16384 counts/g at ±2g full scale (MPU6050 datasheet).
     // Multiplying by SURFACE_GRAVITY converts from g to m/s².
-    accNorth = (aaWorld.y / (float)LSB_PER_G) * SURFACE_GRAVITY;
-    accEast = (aaWorld.x / (float)LSB_PER_G) * SURFACE_GRAVITY;
+    accNorth = SURFACE_GRAVITY * (aaWorld.y / (float)LSB_PER_G);
+    accEast = SURFACE_GRAVITY * (aaWorld.x / (float)LSB_PER_G);
   }
 
   // ---- GPS Update ----
@@ -223,7 +226,8 @@ void loop() {
       altitude = gps.altitude.isValid() ? gps.altitude.meters() : NAN;
       if (gps.speed.isValid() && gps.course.isValid()) {
         speed_m_s = gps.speed.mps();
-        course_rad = gps.course.deg() * M_PI / 180.0;
+        course_deg = gps.course.deg();
+        course_rad = course_deg * M_PI / 180.0;
         vNorth = speed_m_s * cos(course_rad);
         vEast = speed_m_s * sin(course_rad);
       } else {
@@ -256,4 +260,26 @@ void loop() {
   elapsed_time = millis() - start;
   wait_time = SS_DT_MILIS > elapsed_time ? SS_DT_MILIS - elapsed_time : 0;
   delay(wait_time);
+#ifdef SERIAL_PLOTTER
+  Serial.print("speed_m_s:");
+  Serial.print(speed_m_s);
+  Serial.print(",");
+  Serial.print("course_deg:");
+  Serial.print(course_deg);
+  Serial.print(",");
+  Serial.print("course_rad:");
+  Serial.print(course_rad);
+  Serial.print(",");
+  Serial.print("vNorth:");
+  Serial.print(vNorth);
+  Serial.print(",");
+  Serial.print("vEast:");
+  Serial.print(vEast);
+  Serial.print(",");
+  Serial.print("accNorth:");
+  Serial.print(accNorth);
+  Serial.print(",");
+  Serial.print("accEast:");
+  Serial.println(accEast);
+#endif
 }
