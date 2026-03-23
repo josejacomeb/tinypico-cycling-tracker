@@ -1,6 +1,7 @@
 import pathlib
 import argparse
 import datetime
+import sys
 import pytz
 
 import pandas as pd
@@ -56,8 +57,8 @@ def main():
     print(f"Number of rows in CSV: {len(df)}")
     df = df.dropna(subset=["lat", "lng"])
     print(f"Removed rows with missing lat/lng: new total {len(df)}")
-    if "gps_update" in df.columns:
-        df = df[df["gps_update"] == 1]
+    if "gpsUpdate" in df.columns:
+        df = df[df["gpsUpdate"].astype(bool)]
         print(f"Filtered to rows with GPS updates: new total {len(df)}")
     # Check for time that corresponds to an actual one
     tz = pytz.timezone(args.timezone_gpx)
@@ -73,7 +74,7 @@ def main():
         # Sum the real time to the time offsets of the microcontroller
         df["time"] = df["time"].apply(
             lambda x: int(
-                (start_dt + datetime.timedelta(seconds=int(x))).timestamp() * 1e3
+                (start_dt + datetime.timedelta(seconds=float(x))).timestamp() * 1e3
             )
         )
     # Convert timestamp to datetime
@@ -81,7 +82,7 @@ def main():
     df = df.set_index("datetime")
 
     # Resample to 1 second
-    df = df.resample("1s").mean(numeric_only=True).dropna(subset=["lat", "lng"])
+    df = df.resample("1s").last().dropna(subset=["lat", "lng"])
 
     print(f"Rows after 1-second resampling: {len(df)}")
 
@@ -110,4 +111,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
