@@ -19,7 +19,6 @@ UKF loop per row
 """
 
 import pathlib
-import math
 import argparse
 
 import pandas as pd
@@ -37,23 +36,10 @@ from constants import (
 )
 
 
-def _has_gps(row: pd.Series) -> bool:
-    """Return True if this row carries a valid GPS fix (non-NaN, non-zero)."""
-    try:
-        return (
-            not math.isnan(row["lat"])
-            and not math.isnan(row["lng"])
-            and row["lat"] != 0.0
-            and row["lng"] != 0.0
-        )
-    except (TypeError, ValueError):
-        return False
-
-
 def _find_first_gps_row(df: pd.DataFrame) -> pd.Series:
     """Return the first row with a valid GPS fix, used to seed the UKF state."""
     for _, row in df.iterrows():
-        if _has_gps(row):
+        if row["gpsUpdate"]:
             return row
     raise ValueError("No valid GPS fix found in the input CSV. Cannot initialise UKF.")
 
@@ -105,10 +91,10 @@ def main():
     zero_point = LatLonDeg()
 
     results = []
-
-    for idx, row in df.iterrows():
+    last_time = 0
+    for _, row in df.iterrows():
         time = row["time"]
-
+        gps_update = False
         # Ignore rows logged before the UKF was initialised
         if time < first_gps["time"]:
             continue
@@ -116,27 +102,27 @@ def main():
         # Predict step
         ukf_east.add_imu_acceleration(row["accEast"], time)
         ukf_north.add_imu_acceleration(row["accNorth"], time)
-
-        gps_available = _has_gps(row)
-        if gps_available:
+        # Avoid double GPS detections
+        if row["gpsUpdate"] and (time - last_time > 0.5):
             # Update Step
             gps_pos = LatLonDeg(lat=row["lat"], lon=row["lng"])
             ukf_east.add_gps_position_velocity(gps_pos, row["vEast"])
             ukf_north.add_gps_position_velocity(gps_pos, row["vNorth"])
+            last_time = time
+            gps_update = True
 
-        # TODO: Check why this is working
-        point_n = get_point_ahead(zero_point, ukf_east.position, 270.0)
-        point_ne = get_point_ahead(point_n, ukf_north.position, 180)
+        point_n = get_point_ahead(zero_point, ukf_east.position, 90.0)
+        point_ne = get_point_ahead(point_n, ukf_north.position, 0.0)
 
         results.append(
             {
                 "time": time,
                 "lat": point_ne.lat,
                 "lng": point_ne.lon,
-                "alt": row["alt"] if "alt" in row else None,
+                "alt": row["alt"] if "alt" in row and gps_update else None,
                 "vNorth": ukf_north.velocity,
                 "vEast": ukf_east.velocity,
-                "gps_update": gps_available,  # True on rows where GPS was fused
+                "gpsUpdate": gps_update,  # True on rows where GPS was fused
             }
         )
 
@@ -144,7 +130,7 @@ def main():
     df_out.to_csv(args.output_csv, index=False)
 
     total = len(df_out)
-    gps_rows = int(df_out["gps_update"].sum())
+    gps_rows = int(df_out["gpsUpdate"].sum())
     print(
         f"Wrote {total} rows → {args.output_csv}\n"
         f"  IMU predict steps : {total - gps_rows}  (~{(total - gps_rows) * dt:.1f} s)\n"
