@@ -1,6 +1,7 @@
 import math
-from data_types import LatLonDeg
+from data_types import GPSAxis, LatLonDeg
 from constants import EARTH_RADIUS
+from copy import copy
 
 
 def get_point_ahead(
@@ -52,3 +53,35 @@ def get_point_ahead(
     res_lon = math.degrees(math.fmod((lon2 + 3 * math.pi), (2 * math.pi)) - math.pi)
 
     return LatLonDeg(lat=res_lat, lon=res_lon)
+
+
+def get_distance_meters_per_axis(
+    from_pos: LatLonDeg, to_pos: LatLonDeg, axis: GPSAxis
+) -> float:
+    """Calculate the distance in metres between from_pos and to_pos along the specified axis."""
+    from_pos = copy(from_pos)
+    if axis == GPSAxis.LONGITUDE:
+        from_pos.lat = 0
+    elif axis == GPSAxis.LATITUDE:
+        from_pos.lon = 0
+    distance = getDistanceMeters(from_pos, to_pos)
+    # In case of negative longitude/latitude, the distance along that axis should be negative
+    if axis == GPSAxis.LONGITUDE and from_pos.lon < 0:
+        distance *= -1
+    elif axis == GPSAxis.LATITUDE and from_pos.lat < 0:
+        distance *= -1
+    return distance
+
+
+def getDistanceMeters(from_pos: LatLonDeg, to_pos: LatLonDeg) -> float:
+    """Haversine formula for great-circle distance between two lat/lng points."""
+
+    delta_lat = math.radians(to_pos.lat - from_pos.lat)
+    delta_lng = math.radians(to_pos.lon - from_pos.lon)
+
+    a = math.sin(delta_lat / 2) ** 2 + math.cos(math.radians(from_pos.lat)) * math.cos(
+        math.radians(to_pos.lat)
+    ) * (math.sin(delta_lng / 2) ** 2)
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1.0 - a))
+    distance = EARTH_RADIUS * c
+    return distance
