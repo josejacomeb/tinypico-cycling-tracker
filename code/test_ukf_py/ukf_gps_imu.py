@@ -2,9 +2,9 @@ from dataclasses import dataclass
 
 from filterpy.kalman import UnscentedKalmanFilter, MerweScaledSigmaPoints
 import numpy as np
-from constants import X_LEN, Z_LEN, U_LEN, EARTH_RADIUS
+from constants import X_LEN, Z_LEN, U_LEN
 from data_types import LatLonDeg, GPSAxis
-import math
+from utils import get_distance_meters_per_axis
 
 
 def fx_axis(x, dt, a):
@@ -79,60 +79,24 @@ class UKFGPSIMU:
         self.ukf.x = np.zeros(self.X_LEN)
 
         # Process noise covariance (IMU uncertainty)
-        self.ukf.Q = np.diag(
-            [
-                self.accstd * self.accstd,
-                self.accstd * self.accstd,
-            ]
-        )
-        self.ukf.R = np.diag(
-            [
-                self.posstd**2,
-                self.posstd**2,
-            ]
-        )
+        self.ukf.Q = self._compute_process_noise(self.dt)
+        self.ukf.R = np.diag([self.posstd**2, self.velstd**2])
         # Initial Covariance
-        self.ukf.P = np.eye(self.X_LEN) * self.posstd
+        self.ukf.P = np.diag([self.posstd**2, self.velstd**2])
 
         self.a = 0.0
         self.current_timestamp = 0.0
 
-    def init_position_velocity(self, pos: LatLonDeg, vel: float, timestamp: float):
-        self.ukf.x[0] = self.get_distance_meters_per_axis(
-            pos, self.zero_lat_lng, self.ax
+    def _compute_process_noise(self, dt):
+        q = self.accstd**2
+        return np.array(
+            [[q * dt**4 / 4.0, q * dt**3 / 2.0], [q * dt**3 / 2.0, q * dt**2]]
         )
+
+    def init_position_velocity(self, pos: LatLonDeg, vel: float, timestamp: float):
+        self.ukf.x[0] = get_distance_meters_per_axis(pos, self.zero_lat_lng, self.ax)
         self.ukf.x[1] = vel
         self.current_timestamp = timestamp
-
-    @staticmethod
-    def get_distance_meters_per_axis(
-        from_pos: LatLonDeg, to_pos: LatLonDeg, axis: GPSAxis
-    ) -> float:
-        """
-        Returns the SIGNED distance (meters) between two positions along one axis.
-        """
-        to_lng, to_lat = to_pos.lon, to_pos.lat
-        from_lng, from_lat = from_pos.lon, from_pos.lat
-        # Logic mirrored from C++ snippet:
-        # If axis is LONGITUDE, it zeros out the longitude variables.
-        if axis == GPSAxis.LONGITUDE:
-            to_lat = 0.0
-            from_lat = 0.0
-        else:
-            to_lng = 0.0
-            from_lng = 0.0
-
-        delta_lon = math.radians(to_lng - from_lng)
-        delta_lat = math.radians(to_lat - from_lat)
-
-        a = (
-            math.sin(delta_lat / 2.0) ** 2
-            + math.cos(math.radians(from_lat))
-            * math.cos(math.radians(to_lat))
-            * math.sin(delta_lon / 2.0) ** 2
-        )
-        distance = 2 * math.atan2(math.sqrt(a), math.sqrt(1.0 - a)) * EARTH_RADIUS
-        return distance
 
     @property
     def position(self) -> float:
@@ -146,7 +110,7 @@ class UKFGPSIMU:
         """UKF update step: fuse GPS position and velocity measurement."""
         z = np.array(
             [
-                self.get_distance_meters_per_axis(gps_pos, self.zero_lat_lng, self.ax),
+                get_distance_meters_per_axis(gps_pos, self.zero_lat_lng, self.ax),
                 gps_vel,
             ]
         )
@@ -158,5 +122,6 @@ class UKFGPSIMU:
         if self.dt <= 0:
             return  # Guard against duplicate or out-of-order timestamps
         self.a = imu_acc
+        self.ukf.Q = self._compute_process_noise(self.dt)
         self.ukf.predict(dt=self.dt)
         self.current_timestamp = timestamp
