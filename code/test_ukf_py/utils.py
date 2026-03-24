@@ -31,7 +31,7 @@ def get_point_ahead(
     """
     # 1. Convert to radians
     lat1 = math.radians(start.lat)
-    lon1 = math.radians(start.lon)
+    lng1 = math.radians(start.lng)
     bearing = math.radians(bearing_deg)
 
     # 2. Angular distance (radians)
@@ -46,13 +46,13 @@ def get_point_ahead(
     # 4. New longitude
     y = math.sin(bearing) * math.sin(delta) * math.cos(lat1)
     x = math.cos(delta) - math.sin(lat1) * math.sin(lat2)
-    lon2 = lon1 + math.atan2(y, x)
+    lng2 = lng1 + math.atan2(y, x)
 
     # 5. Back to degrees; normalise longitude to [-180, 180]
     res_lat = math.degrees(lat2)
-    res_lon = math.degrees(math.fmod((lon2 + 3 * math.pi), (2 * math.pi)) - math.pi)
+    res_lng = math.degrees(math.fmod((lng2 + 3 * math.pi), (2 * math.pi)) - math.pi)
 
-    return LatLonDeg(lat=res_lat, lon=res_lon)
+    return LatLonDeg(lat=res_lat, lng=res_lng)
 
 
 def get_distance_meters_per_axis(
@@ -63,10 +63,10 @@ def get_distance_meters_per_axis(
     if axis == GPSAxis.LONGITUDE:
         from_pos.lat = 0
     elif axis == GPSAxis.LATITUDE:
-        from_pos.lon = 0
+        from_pos.lng = 0
     distance = getDistanceMeters(from_pos, to_pos)
     # In case of negative longitude/latitude, the distance along that axis should be negative
-    if axis == GPSAxis.LONGITUDE and from_pos.lon < 0:
+    if axis == GPSAxis.LONGITUDE and from_pos.lng < 0:
         distance *= -1
     elif axis == GPSAxis.LATITUDE and from_pos.lat < 0:
         distance *= -1
@@ -77,7 +77,7 @@ def getDistanceMeters(from_pos: LatLonDeg, to_pos: LatLonDeg) -> float:
     """Haversine formula for great-circle distance between two lat/lng points."""
 
     delta_lat = math.radians(to_pos.lat - from_pos.lat)
-    delta_lng = math.radians(to_pos.lon - from_pos.lon)
+    delta_lng = math.radians(to_pos.lng - from_pos.lng)
 
     a = math.sin(delta_lat / 2) ** 2 + math.cos(math.radians(from_pos.lat)) * math.cos(
         math.radians(to_pos.lat)

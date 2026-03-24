@@ -75,7 +75,7 @@ def main():
 
     # ---- Seed state from the first valid GPS fix ----
     first_gps = _find_first_gps_row(df)
-    origin = LatLonDeg(lat=first_gps["lat"], lon=first_gps["lng"])
+    origin = LatLonDeg(lat=first_gps["lat"], lng=first_gps["lng"])
 
     # ---- Create one UKF per axis ----
     # The Standard Devation error was calculated with the Device in a static position
@@ -105,7 +105,7 @@ def main():
         # Avoid double GPS detections
         if row["gpsUpdate"] and (time - last_time > 0.5):
             # Update Step
-            gps_pos = LatLonDeg(lat=row["lat"], lon=row["lng"])
+            gps_pos = LatLonDeg(lat=row["lat"], lng=row["lng"])
             ukf_east.add_gps_position_velocity(gps_pos, row["vEast"])
             ukf_north.add_gps_position_velocity(gps_pos, row["vNorth"])
             last_time = time
@@ -118,7 +118,7 @@ def main():
             {
                 "time": time,
                 "lat": point_ne.lat,
-                "lng": point_ne.lon,
+                "lng": point_ne.lng,
                 "alt": row["alt"] if "alt" in row and gps_update else None,
                 "vNorth": ukf_north.velocity,
                 "vEast": ukf_east.velocity,

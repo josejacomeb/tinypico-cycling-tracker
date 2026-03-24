@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
 
-
 # Define the Axis Enum to match the C++ logic
 class GPSAxis(Enum):
     LATITUDE = 1
@@ -11,4 +10,4 @@ class GPSAxis(Enum):
 @dataclass
 class LatLonDeg:
     lat: float = 0.0  # Latitude in degrees
-    lon: float = 0.0  # Longitude in degrees
+    lng: float = 0.0  # Longitude in degrees

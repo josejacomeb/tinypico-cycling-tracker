@@ -9,7 +9,7 @@ ACTUAL_GRAVITY = 9.771927346  # m/s² — Ecuador at ~2,729 m altitude
 # Constants
 EARTH_RADIUS = 6371 * 1000.0  # Meters
 
-# You can get these values by running the data logger in a static position 
+# You can get these values by running the data logger in a static position
 # and calculating the standard deviation of the logged acceleration and GPS velocity values.
 # ACC_STD: standard deviation of IMU accelerometer noise (m/s²).
 ACC_STD_NORTH = 0.0559  # m/s²
