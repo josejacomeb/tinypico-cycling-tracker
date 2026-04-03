@@ -12,7 +12,7 @@ UKF loop per row
 ----------------
 1. PREDICT  — always run, using IMU acceleration and the actual elapsed time
               (delta_t from the timestamp column, not a fixed dt assumption).
-2. UPDATE   — run only when the row contains a valid GPS fix (non-NaN lat/lng).
+2. UPDATE   — run only when the row contains a valid GPS fix (gpsUpdate).
 3. OUTPUT   — emit a fused (lat, lng, vNorth, vEast) row on *every* step,
               so the output has the same 10 Hz density as the input and the
               IMU-driven dead-reckoning between GPS fixes is captured.

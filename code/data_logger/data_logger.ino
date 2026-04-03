@@ -19,7 +19,7 @@
 
 const unsigned int led_time = 1000;
 double speed_m_s, altitude, latitude, longitude, vNorth, vEast, course_rad, course_deg;
-unsigned long start, wait_time, elapsed_time, start_time;
+unsigned long start, wait_time, elapsed_time, start_time, now;
 // Acceleration in m/s² (converted from raw DMP counts at read time).
 // Using float keeps units consistent with vNorth/vEast (m/s) in the CSV.
 float accNorth, accEast;
@@ -215,8 +215,8 @@ void loop() {
     // Convert raw DMP counts → m/s² immediately.
     // LSB_PER_G = 16384 counts/g at ±2g full scale (MPU6050 datasheet).
     // Multiplying by SURFACE_GRAVITY converts from g to m/s².
-    accNorth = SURFACE_GRAVITY * (aaWorld.y / (float)LSB_PER_G);
-    accEast = SURFACE_GRAVITY * (aaWorld.x / (float)LSB_PER_G);
+    accNorth = aaWorld.y / LSB_PER_G * SURFACE_GRAVITY;
+    accEast = aaWorld.x / LSB_PER_G * SURFACE_GRAVITY;
   }
 
   // ---- GPS Update ----
@@ -244,7 +244,8 @@ void loop() {
   // GPS columns are written as NaN when no fix arrived this cycle so that
   // sensor_fusion.py can distinguish predict-only rows from GPS update rows.
   if (start_writing) {
-    elapsed_seconds = (millis() - start_time) / 1000.0f;
+    now = millis();
+    elapsed_seconds = (now - start_time) / 1000.0f;
     if (gps_updated_this_cycle) {
       sprintf(buffer, "%.4f,%.2f,%.6f,%.6f,%.6f,%.6f,%.4f,%.4f,1",
               elapsed_seconds, altitude, latitude, longitude,
