@@ -15,7 +15,7 @@
 #include "writer.hpp"
 
 // See the data in the Arduino Serial Plotter https://docs.arduino.cc/software/ide-v2/tutorials/ide-v2-serial-plotter/
-#define SERIAL_PLOTTER 1
+#define SERIAL_PLOTTER 0
 
 const unsigned int led_time = 1000;
 double speed_m_s, altitude, latitude, longitude, vNorth, vEast, course_rad, course_deg;
