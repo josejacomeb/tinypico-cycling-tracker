@@ -1119,10 +1119,6 @@
 		(at 179.07 80.01)
 		(uuid "cf0e4073-f896-48c9-bb9b-c9f22cd1edac")
 	)
-	(no_connect
-		(at 179.07 82.55)
-		(uuid "d4ca8e42-7142-4fad-bbb3-55bac300c4e6")
-	)
 	(wire
 		(pts
 			(xy 173.99 60.96) (xy 173.99 52.07)
@@ -1455,6 +1451,16 @@
 	)
 	(wire
 		(pts
+			(xy 176.53 82.55) (xy 179.07 82.55)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f74d76f1-025e-47f2-ac4c-fd3e5ed73903")
+	)
+	(wire
+		(pts
 			(xy 168.91 87.63) (xy 205.74 87.63)
 		)
 		(stroke
@@ -1495,6 +1501,17 @@
 			(justify left)
 		)
 		(uuid "72ac1e58-ccf4-4f16-9461-899b54a23386")
+	)
+	(hierarchical_label "INT"
+		(shape input)
+		(at 176.53 82.55 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "94af0017-aeb8-4af7-856e-d9223c0d79ac")
 	)
 	(hierarchical_label "VCC1"
 		(shape input)
@@ -1582,7 +1599,7 @@
 					(unit 1)
 				)
 			)
-			(project ""
+			(project "TinyPico-Cycling-Tracker"
 				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/087e4c3f-dadb-4b00-b947-e0c7adeb7ff5"
 					(reference "#FLG03")
 					(unit 1)
@@ -1721,7 +1738,7 @@
 					(unit 1)
 				)
 			)
-			(project ""
+			(project "TinyPico-Cycling-Tracker"
 				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/087e4c3f-dadb-4b00-b947-e0c7adeb7ff5"
 					(reference "SW2")
 					(unit 1)
@@ -1793,7 +1810,7 @@
 					(unit 1)
 				)
 			)
-			(project ""
+			(project "TinyPico-Cycling-Tracker"
 				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/087e4c3f-dadb-4b00-b947-e0c7adeb7ff5"
 					(reference "#PWR01")
 					(unit 1)
@@ -1950,7 +1967,7 @@
 					(unit 1)
 				)
 			)
-			(project ""
+			(project "TinyPico-Cycling-Tracker"
 				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/087e4c3f-dadb-4b00-b947-e0c7adeb7ff5"
 					(reference "U6")
 					(unit 1)
@@ -2032,7 +2049,7 @@
 					(unit 1)
 				)
 			)
-			(project ""
+			(project "TinyPico-Cycling-Tracker"
 				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/087e4c3f-dadb-4b00-b947-e0c7adeb7ff5"
 					(reference "U7")
 					(unit 1)
@@ -2108,7 +2125,7 @@
 					(unit 1)
 				)
 			)
-			(project ""
+			(project "TinyPico-Cycling-Tracker"
 				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/087e4c3f-dadb-4b00-b947-e0c7adeb7ff5"
 					(reference "R2")
 					(unit 1)
@@ -2308,7 +2325,7 @@
 					(unit 1)
 				)
 			)
-			(project ""
+			(project "TinyPico-Cycling-Tracker"
 				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/087e4c3f-dadb-4b00-b947-e0c7adeb7ff5"
 					(reference "#PWR06")
 					(unit 1)
@@ -2380,7 +2397,7 @@
 					(unit 1)
 				)
 			)
-			(project ""
+			(project "TinyPico-Cycling-Tracker"
 				(path "/c19b4b11-d562-4619-8198-7fbe4f513d32/087e4c3f-dadb-4b00-b947-e0c7adeb7ff5"
 					(reference "#FLG01")
 					(unit 1)
