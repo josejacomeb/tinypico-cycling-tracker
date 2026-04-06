@@ -25,6 +25,14 @@ unsigned long start, wait_time, elapsed_time, start_time, now;
 float accNorth, accEast;
 float elapsed_seconds;
 
+// ---- Yaw offset (DMP world frame → geographic North/East) ----
+// The DMP world frame X/Y is gravity-aligned but its "North" is arbitrary
+// (it points wherever the sensor was facing at power-on).
+// Once GPS reports a reliable course we compute a one-shot rotation offset
+// so that aaWorld can be correctly decomposed into geographic North/East.
+float yawOffsetRad = 0.0f;
+bool yawCalibrated = false;
+
 // Initialise the TinyPICO library
 TinyPICO tp = TinyPICO();
 
@@ -56,8 +64,8 @@ void DMPDataReady() {
 TinyGPSPlus gps;
 
 bool start_writing = false;
-const char* extension = "csv";
-const char* header_data = "time,alt,lat,lng,vNorth,vEast,accNorth,accEast,gpsUpdate";
+const char *extension = "csv";
+const char *header_data = "time,alt,lat,lng,vNorth,vEast,accNorth,accEast,gpsUpdate";
 // GPS columns (lat, lng, vNorth, vEast, alt) contain NaN when no GPS fix
 char buffer[128];
 
@@ -67,6 +75,20 @@ bool gps_updated_this_cycle = false;
 
 // GPS acquisition timeout to avoid hanging forever in setup().
 const unsigned long GPS_TIMEOUT_MS = 300000UL;  // 5 minutes
+
+// ---- Yaw offset helpers ----
+
+// Extract yaw angle (radians) from the DMP quaternion (ZYX convention).
+float quatToYaw(Quaternion &q) {
+  return atan2(2.0f * (q.x * q.y + q.w * q.z),
+               q.w * q.w + q.x * q.x - q.y * q.y - q.z * q.z);
+}
+
+// Rotate 2-D vector (x, y) counter-clockwise by theta radians.
+void rotate2D(float x, float y, float theta, float &xOut, float &yOut) {
+  xOut = x * cos(theta) - y * sin(theta);
+  yOut = x * sin(theta) + y * cos(theta);
+}
 
 void setup() {
   tp.DotStar_Clear();
@@ -215,8 +237,18 @@ void loop() {
     // Convert raw DMP counts → m/s² immediately.
     // LSB_PER_G = 16384 counts/g at ±2g full scale (MPU6050 datasheet).
     // Multiplying by SURFACE_GRAVITY converts from g to m/s².
-    accNorth = aaWorld.y / LSB_PER_G * SURFACE_GRAVITY;
-    accEast = aaWorld.x / LSB_PER_G * SURFACE_GRAVITY;
+    // If the yaw offset has been calibrated from GPS, rotate the DMP world
+    // frame axes onto geographic North/East before decomposing.
+    {
+      float ax = aaWorld.y / LSB_PER_G * SURFACE_GRAVITY;  // provisional North
+      float ay = aaWorld.x / LSB_PER_G * SURFACE_GRAVITY;  // provisional East
+      if (yawCalibrated) {
+        rotate2D(ax, ay, yawOffsetRad, accNorth, accEast);
+      } else {
+        accNorth = ax;
+        accEast = ay;
+      }
+    }
   }
 
   // ---- GPS Update ----
@@ -230,6 +262,22 @@ void loop() {
         course_rad = course_deg * M_PI / 180.0;
         vNorth = speed_m_s * cos(course_rad);
         vEast = speed_m_s * sin(course_rad);
+
+        // ---- Yaw offset calibration ----
+        // Only attempt once we have a reliable speed (>0.5 m/s) so that
+        // the GPS course heading is meaningful and stable.
+        if (!yawCalibrated && speed_m_s > 0.5) {
+          // GPS bearing convention: 0° = North, 90° = East (clockwise).
+          // Convert to a standard math angle (CCW from East) so we can
+          // compare it directly with the atan2-based DMP yaw.
+          float gpsMathAngle = (float)(M_PI / 2.0 - course_rad);
+          float dmpYaw = quatToYaw(q);
+          yawOffsetRad = gpsMathAngle - dmpYaw;
+          yawCalibrated = true;
+          Serial.print("Yaw offset calibrated: ");
+          Serial.print(yawOffsetRad * 180.0f / M_PI, 1);
+          Serial.println(" deg");
+        }
       } else {
         vNorth = NAN;
         vEast = NAN;
