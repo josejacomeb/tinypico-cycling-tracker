@@ -17,7 +17,9 @@ if [[ ! -f "$INPUT_CSV" ]]; then
     exit 1
 fi
 
-source .venv/bin/activate
+if [[ "$GT_GPX" ]]; then
+    echo "Ground truth GPX provided: $GT_GPX", "will be used for validation."
+fi
 
 # 4. Extract the base name from INPUT_CSV without extension for output naming
 input_dir=$(dirname "$INPUT_CSV")
@@ -41,5 +43,4 @@ if [[ -n "$GT_GPX" ]]; then
     python3 utils/validate_gpx_performance.py --input "$OUTPUT_UKF_GPX" --ground_truth "$GT_GPX"
     python3 utils/validate_gpx_performance.py --input "$OUTPUT_RAW_DATA_GPX" --ground_truth "$GT_GPX"
     echo "------------------------------------------------------------------"
-    
 fi

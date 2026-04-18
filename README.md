@@ -7,9 +7,26 @@ Tinypico based GPS + IMU + SD data logger for cycling purposes
 
 ### Software
 
+**Programming Languages**: C++20 and Python 3.12
+
+#### Electronic Design
+
 - [Kicad v9.x.x](https://www.kicad.org/)
 - [KiKit v1.7.x](https://yaqwsx.github.io/KiKit/latest/)
+
+#### Integrated Development Environment
+
 - [Arduino IDE v2.3.x](https://www.arduino.cc/en/software/)
+- [Visual Studio Code](https://code.visualstudio.com/)
+
+#### Software Libraries
+
+- [TinyGPS++](https://github.com/mikalhart/TinyGPSPlus)
+- [Electronics Cats MPU6050](https://github.com/ElectronicCats/mpu6050)
+- [Embedded_UKF_Library](https://github.com/pronenewbits/Embedded_UKF_Library)
+- [Pandas 2.x](https://pandas.pydata.org/)
+- [gpxpy](https://github.com/tkrajina/gpxpy)
+- [FilterPy v1.4.x](https://filterpy.readthedocs.io/en/latest/#)
 
 ### Hardware
 
@@ -54,6 +71,8 @@ Tinypico based GPS + IMU + SD data logger for cycling purposes
 
 ### For Arduino
 
+#### Run the full prototype
+
 1. Please follow the Espressif [instructions](https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html) to support the `ESP32` boards on your Arduino.
 2. Please install the following libraries in your Arduino IDE in your Tools > Manage Libraries section:
     1. [TinyPICO Helper Library](https://docs.arduino.cc/libraries/tinypico-helper-library/)
@@ -63,6 +82,10 @@ Tinypico based GPS + IMU + SD data logger for cycling purposes
 4. Select the Communication Port to `/dev/ttyACM0` if you're running on Linux.
 5. Calibrate IMU as shown in the [MPU6050 Zero tutorial](https://github.com/ElectronicCats/mpu6050/wiki/4.-Examples#zero) and copy the offsets to the main code
 6. Open the folder [code/arduino-tct/](code/arduino-tct/) with the IDE to flash the code to your TinyPICO Board.
+
+#### Check other software
+
+1. Please refer to the [code README](code/README.md) for more infomation
 
 ## Modes
 
