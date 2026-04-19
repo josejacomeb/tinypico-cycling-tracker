@@ -22,10 +22,12 @@ import pathlib
 import argparse
 
 import pandas as pd
+import numpy as np
 
 from utils import get_point_ahead
 from data_types import LatLonDeg, GPSAxis
 from ukf_gps_imu import UKFGPSIMU
+import math
 from constants import (
     dt,
     POS_STD,
@@ -69,6 +71,35 @@ def build_argparser() -> argparse.ArgumentParser:
     return parser
 
 
+# IMU filtering
+ACC_ALPHA = 0.2  # low-pass factor
+ACC_DEADBAND = 0.10  # m/s²
+ACC_MAX = 3.0
+
+# --- FILTER STATE ---
+acc_n_f = 0.0
+acc_e_f = 0.0
+
+
+def filter_acc(acc_raw, acc_prev):
+    """Low-pass + deadband + spike rejection"""
+    if not np.isfinite(acc_raw):
+        return acc_prev
+
+    # spike rejection
+    if abs(acc_raw) > ACC_MAX:
+        return acc_prev
+
+    # low-pass
+    acc_f = ACC_ALPHA * acc_raw + (1 - ACC_ALPHA) * acc_prev
+
+    # deadband
+    if abs(acc_f) < ACC_DEADBAND:
+        acc_f = 0.0
+
+    return acc_f
+
+
 def main():
     args = build_argparser().parse_args()
     df = pd.read_csv(args.input_csv)
@@ -99,9 +130,22 @@ def main():
         if time < first_gps["time"]:
             continue
 
+        # --- RAW ACC ---
+        acc_n_raw = row["accNorth"]
+        acc_e_raw = row["accEast"]
+        global acc_n_f, acc_e_f
+        # --- FILTER ACC ---
+        acc_n_f = filter_acc(acc_n_raw, acc_n_f)
+        acc_e_f = filter_acc(acc_e_raw, acc_e_f)
+
         # Predict step
-        ukf_east.add_imu_acceleration(row["accEast"], time)
-        ukf_north.add_imu_acceleration(row["accNorth"], time)
+        if math.sqrt(row["vNorth"] ** 2 + row["vEast"] ** 2) > 1.0:
+            ukf_east.add_imu_acceleration(acc_e_f, time)
+            ukf_north.add_imu_acceleration(acc_n_f, time)
+        else:
+            # IMU unreliable -> zero it
+            ukf_east.add_imu_acceleration(0.0, time)
+            ukf_north.add_imu_acceleration(0.0, time)
         # Avoid double GPS detections
         if row["gpsUpdate"] and (time - last_time > 0.5):
             # Update Step

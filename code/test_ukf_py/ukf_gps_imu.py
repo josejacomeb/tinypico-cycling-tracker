@@ -62,7 +62,7 @@ class UKFGPSIMU:
         self.zero_lat_lng = LatLonDeg()  # Origin (0.0, 0.0)
 
         self.points = MerweScaledSigmaPoints(
-            n=self.X_LEN, alpha=0.1, beta=2.0, kappa=1.0
+            n=self.X_LEN, alpha=0.01, beta=2.0, kappa=0.0
         )
         self.ukf = UnscentedKalmanFilter(
             dim_x=self.X_LEN,
