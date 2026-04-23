@@ -76,3 +76,9 @@ $$\mathbf{P}_0 = \sigma_p\,\mathbf{I} = \begin{bmatrix} 2.5 & 0 \\ 0 & 2.5 \end{
 ## Step 5 — Back to Coordinates
 
 After filtering, the metric estimates $(p_N, p_E)$ are converted back to geographic coordinates using the forward azimuth formula — first applying $p_N$ northward, then $p_E$ eastward from the local origin.
+
+## Inspiration
+
+- [Kalman Filter Practical Walkthrough by Scott Lodbell](https://web.archive.org/web/20200229043952/http://scottlobdell.me/2017/01/gps-accelerometer-sensor-fusion-kalman-filter-practical-walkthrough/)
+- [Sensor Fusion implementation in Python by smahajan07](https://github.com/smahajan07/sensor-fusion)
+- [The MPU6050 Explained by mjwhite8119](https://mjwhite8119.github.io/Robots/mpu6050)
